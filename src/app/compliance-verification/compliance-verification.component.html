@@ -1,0 +1,83 @@
+<div class="container mt-4">
+  <h2>Crear Verificación de Cumplimiento</h2>
+  <form [formGroup]="verificationForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label>Persona que realiza el muestreo</label>
+      <input formControlName="sampled" class="form-control" required />
+    </div>
+    <div class="form-group">
+      <label>Producto</label>
+      <select formControlName="product_id" class="form-control" required>
+        <option value="" disabled selected>Seleccione un producto</option>
+        <option *ngFor="let p of products" [value]="p.id">{{ p.name }}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Marca</label>
+      <select formControlName="brand_id" class="form-control" required>
+        <option value="" disabled selected>Seleccione una marca</option>
+        <option *ngFor="let b of brands" [value]="b.id">{{ b.name }}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Gramaje</label>
+      <select formControlName="grammage_id" class="form-control" required>
+        <option value="" disabled selected>Seleccione un gramaje</option>
+        <option *ngFor="let g of grammages" [value]="g.id">{{ g.name }}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Máquina</label>
+      <select formControlName="machine_id" class="form-control" required>
+        <option value="" disabled selected>Seleccione una máquina</option>
+        <option *ngFor="let m of machines" [value]="m.id">{{ m.name }}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Lote o fecha de vencimiento</label>
+      <input formControlName="lot_expires" class="form-control" required />
+    </div>
+    <div class="form-group">
+      <label>Persona responsable del análisis</label>
+      <input formControlName="analyzed" class="form-control" required />
+    </div>
+    <div formArrayName="items">
+      <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="border p-2 mb-2">
+        <h5>Item {{ i + 1 }}</h5>
+        <div class="form-group">
+          <label>Peso muestra AGM</label>
+          <input formControlName="sample_weight_agm" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label>Peso promedio calculado</label>
+          <input formControlName="average_weight" class="form-control" required />
+        </div>
+        <button type="button" class="btn btn-danger btn-sm" (click)="removeItem(i)" *ngIf="items.length > 1">Eliminar</button>
+      </div>
+      <button type="button" class="btn btn-secondary" (click)="addItem()">Agregar Item</button>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3" [disabled]="!verificationForm.valid">Crear Verificación</button>
+  </form>
+  <!-- Modal Bootstrap para mensajes -->
+  <div class="modal fade" id="responseModal" tabindex="-1" aria-labelledby="responseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" [ngClass]="{'bg-success': modalType==='success', 'bg-danger': modalType==='error'}">
+          <h5 class="modal-title text-white" id="responseModalLabel">
+            {{ modalType === 'success' ? 'Éxito' : 'Error' }}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {{ modalMessage }}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="responseMessage" class="alert mt-3" [ngClass]="{'alert-success': responseMessage.includes('exitosamente'), 'alert-danger': responseMessage.includes('Error')}" >
+    {{ responseMessage }}
+  </div>
+</div>

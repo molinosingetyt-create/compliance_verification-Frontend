@@ -1,0 +1,7 @@
+{
+    "data": [
+        {"id": 1, "name": "Marca A"},
+        {"id": 2, "name": "Marca B"}
+    ],
+    "message": "Marcas obtenidas exitosamente"
+}
