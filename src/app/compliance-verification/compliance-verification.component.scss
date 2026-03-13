@@ -1,57 +1,283 @@
-/* Estilo empresarial y responsivo */
-.container {
-  max-width: 600px;
+/* =========================================
+   VARIABLES Y PALETA CORPORATIVA
+   ========================================= */
+$primary-dark: #2c3e50;
+$accent-blue: #34495e;
+$success-text: #1b5e20;
+$success-bg: #e8f5e9;
+$danger-text: #c62828;
+$danger-bg: #ffebee;
+$border-color: #333;
+$header-bg: #f8f9fa;
+
+/* CONTENEDOR PRINCIPAL */
+.compliance-container {
+  max-width: 1100px;
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-  padding: 2.5rem 2rem 2rem 2rem;
-  margin-top: 2.5rem;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+  padding: 2.5rem 2rem;
+  margin: auto;
+  margin-top: 2rem;
 }
+
+/* TITULOS */
 h2 {
   text-align: center;
   font-weight: 700;
   margin-bottom: 2rem;
   color: #1a237e;
 }
+
+/* HEADER PRINCIPAL */
+.header-responsive {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+/* =========================================
+   TABLA PRINCIPAL (ESTILO EMPRESARIAL)
+   ========================================= */
+.verification-table {
+  background: white;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  font-size: 0.9rem;
+
+  thead {
+    background-color: #263238;
+    color: white;
+
+    th {
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      padding: 12px 15px;
+      border: none;
+      text-align: center;
+    }
+  }
+
+  tbody td {
+    padding: 10px 15px;
+    vertical-align: middle;
+    color: #444;
+    border-bottom: 1px solid #f0f0f0;
+    text-align: center;
+  }
+}
+
+/* BADGES MODERNOS (SOFT UI) */
+.badge-status {
+  padding: 5px 12px;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+.bg-success-soft {
+  background-color: $success-bg;
+  color: $success-text;
+  border: 1px solid rgba(27, 94, 32, 0.2);
+}
+
+.bg-danger-soft {
+  background-color: $danger-bg;
+  color: $danger-text;
+  border: 1px solid rgba(198, 40, 40, 0.2);
+}
+
+/* BOTÓN DE ACCIÓN (ICONO OJO) */
+.btn-action-view {
+  background-color: transparent;
+  color: $primary-dark;
+  border: 1px solid #dcdcdc;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: $primary-dark;
+    color: white;
+    border-color: $primary-dark;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  i {
+    font-size: 1.1rem;
+  }
+}
+
+/* =========================================
+   REPORTE DE DETALLE (ENCABEZADO CENTRADO)
+   ========================================= */
+.report-header-container {
+  border: 1.5px solid $border-color;
+  width: 100%;
+  margin: 0 auto;
+
+  .row {
+    display: flex;
+    align-items: stretch;
+    text-align: center;
+    margin: 0;
+  }
+
+  .header-label {
+    background-color: $header-bg;
+    font-weight: bold;
+    border: 0.5px solid $border-color;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 4px;
+    font-size: 0.85rem;
+    color: #222;
+  }
+
+  .header-value {
+    border: 0.5px solid $border-color;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 4px;
+    font-size: 0.85rem;
+    word-break: break-word;
+  }
+
+  .border-bottom-dark {
+    border-bottom: 1px solid $border-color;
+  }
+}
+
+/* =========================================
+   FORMULARIOS Y PASOS
+   ========================================= */
 .form-group label {
   font-weight: 500;
   color: #333;
 }
+
 .form-control {
   border-radius: 6px;
   border: 1px solid #bdbdbd;
   margin-bottom: 1rem;
   font-size: 1rem;
 }
-.btn-primary {
-  width: 100%;
-  background: #1a237e;
-  border: none;
-  font-weight: 600;
-  font-size: 1.1rem;
-  border-radius: 6px;
-  margin-top: 1rem;
-}
-.btn-secondary {
-  margin-bottom: 1rem;
-}
-.border {
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  background: #f8f9fa;
-}
-.alert-success {
-  background: #e8f5e9;
-  color: #388e3c;
-  border: 1px solid #c8e6c9;
-}
-.alert-danger {
-  background: #ffebee;
-  color: #c62828;
-  border: 1px solid #ffcdd2;
-}
-@media (max-width: 700px) {
-  .container {
-    padding: 1rem 0.5rem;
+
+.form-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 25px;
+  align-items: center;
+
+  .btn {
+    min-width: 160px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
   }
+}
+
+/* =========================================
+   RESPONSIVIDAD
+   ========================================= */
+
+/* TABLET */
+@media (max-width: 992px) {
+  .compliance-container {
+    padding: 1.8rem;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  .modal-xl {
+    max-width: 98%;
+  }
+}
+
+/* MOVIL */
+@media (max-width: 768px) {
+  .header-responsive {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn,
+  .sampling-btn {
+    width: 100%;
+  }
+
+  /* Ajustes Encabezado Reporte */
+  .report-header-container {
+
+    .header-label,
+    .header-value {
+      font-size: 0.75rem;
+      padding: 6px 2px;
+    }
+
+    .col-12 {
+      border-bottom: 0.5px solid $border-color;
+    }
+
+    .small-text-mobile {
+      font-size: 0.65rem !important;
+    }
+  }
+
+  /* Tabla Detalle con Scroll */
+  .table-responsive {
+    border: 1px solid #dee2e6;
+
+    table {
+      min-width: 850px;
+      font-size: 13px;
+    }
+  }
+}
+
+/* MOVIL PEQUEÑO */
+@media (max-width: 480px) {
+  .compliance-container {
+    padding: 1rem;
+  }
+
+  .modal-title {
+    font-size: 0.9rem;
+  }
+
+  .modal-dialog {
+    margin: 8px;
+  }
+}
+
+/* En tu archivo styles.scss o el del componente */
+.modal-body p {
+  white-space: pre-line; /* Permite que el .join('\n') funcione visualmente */
+  line-height: 1.5;
+  font-size: 0.9rem;
 }

@@ -1,83 +1,258 @@
-<div class="container mt-4">
-  <h2>Crear Verificación de Cumplimiento</h2>
-  <form [formGroup]="verificationForm" (ngSubmit)="onSubmit()">
-    <div class="form-group">
-      <label>Persona que realiza el muestreo</label>
-      <input formControlName="sampled" class="form-control" required />
+<div class="container mt-4 compliance-container">
+
+  <div *ngIf="!showForm">
+    <div class="header-responsive">
+      <h2 class="title-page">Verificaciones de Cumplimiento</h2>
+      <button class="btn btn-success sampling-btn" (click)="startSampling()">
+        Realizar Muestreo
+      </button>
     </div>
-    <div class="form-group">
-      <label>Producto</label>
-      <select formControlName="product_id" class="form-control" required>
-        <option value="" disabled selected>Seleccione un producto</option>
-        <option *ngFor="let p of products" [value]="p.id">{{ p.name }}</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Marca</label>
-      <select formControlName="brand_id" class="form-control" required>
-        <option value="" disabled selected>Seleccione una marca</option>
-        <option *ngFor="let b of brands" [value]="b.id">{{ b.name }}</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Gramaje</label>
-      <select formControlName="grammage_id" class="form-control" required>
-        <option value="" disabled selected>Seleccione un gramaje</option>
-        <option *ngFor="let g of grammages" [value]="g.id">{{ g.name }}</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Máquina</label>
-      <select formControlName="machine_id" class="form-control" required>
-        <option value="" disabled selected>Seleccione una máquina</option>
-        <option *ngFor="let m of machines" [value]="m.id">{{ m.name }}</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Lote o fecha de vencimiento</label>
-      <input formControlName="lot_expires" class="form-control" required />
-    </div>
-    <div class="form-group">
-      <label>Persona responsable del análisis</label>
-      <input formControlName="analyzed" class="form-control" required />
-    </div>
-    <div formArrayName="items">
-      <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="border p-2 mb-2">
-        <h5>Item {{ i + 1 }}</h5>
-        <div class="form-group">
-          <label>Peso muestra AGM</label>
-          <input formControlName="sample_weight_agm" class="form-control" required />
-        </div>
-        <div class="form-group">
-          <label>Peso promedio calculado</label>
-          <input formControlName="average_weight" class="form-control" required />
-        </div>
-        <button type="button" class="btn btn-danger btn-sm" (click)="removeItem(i)" *ngIf="items.length > 1">Eliminar</button>
-      </div>
-      <button type="button" class="btn btn-secondary" (click)="addItem()">Agregar Item</button>
-    </div>
-    <button type="submit" class="btn btn-primary mt-3" [disabled]="!verificationForm.valid">Crear Verificación</button>
-  </form>
-  <!-- Modal Bootstrap para mensajes -->
-  <div class="modal fade" id="responseModal" tabindex="-1" aria-labelledby="responseModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header" [ngClass]="{'bg-success': modalType==='success', 'bg-danger': modalType==='error'}">
-          <h5 class="modal-title text-white" id="responseModalLabel">
-            {{ modalType === 'success' ? 'Éxito' : 'Error' }}
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          {{ modalMessage }}
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-        </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped table-hover verification-table">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Muestreador</th>
+            <th>Producto</th>
+            <th>Máquina</th>
+            <th>Analista</th>
+            <th>Lote</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let v of verifications">
+            <td>{{v.id}}</td>
+            <td>{{v.created_at | date:'short'}}</td>
+            <td>{{v.sampled}}</td>
+            <td>{{v.product_name}}</td>
+            <td>{{v.machine_name}}</td>
+            <td>{{v.analyzed}}</td>
+            <td>{{v.lot_expires}}</td>
+            <td>
+              <span class="badge-status"
+                [ngClass]="{'bg-success-soft': v.status == 1, 'bg-danger-soft': v.status == 2}">
+                {{ v.status == 1 ? 'CUMPLE' : 'NO CUMPLE' }}
+              </span>
+            </td>
+            <td class="text-center">
+              <button class="btn btn-action-view" (click)="viewDetail(v.id)" title="Ver detalle">
+                <i class="bi bi-eye-fill"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="verifications.length === 0" class="text-center p-3">
+        No se encontraron registros.
       </div>
     </div>
   </div>
-  <div *ngIf="responseMessage" class="alert mt-3" [ngClass]="{'alert-success': responseMessage.includes('exitosamente'), 'alert-danger': responseMessage.includes('Error')}" >
-    {{ responseMessage }}
+
+  <div *ngIf="showForm">
+    <h2 class="text-center">Nueva Verificación - Paso {{step}} de 3</h2>
+    <form [formGroup]="verificationForm">
+
+      <div *ngIf="step==1">
+        <h4>Datos de la Muestra</h4>
+        <div class="row">
+          <div class="col-md-6 form-group">
+            <label>Persona que realiza el muestreo</label>
+            <input formControlName="sampled" class="form-control">
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Producto</label>
+            <select formControlName="product_id" class="form-control">
+              <option [ngValue]="null" disabled>Seleccione</option>
+              <option *ngFor="let p of products" [value]="p.id">{{p.name}}</option>
+            </select>
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Marca</label>
+            <select formControlName="brand_id" class="form-control">
+              <option [ngValue]="null" disabled>Seleccione</option>
+              <option *ngFor="let b of brands" [value]="b.id">{{b.name}}</option>
+            </select>
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Gramaje</label>
+            <select formControlName="grammage_id" class="form-control">
+              <option [ngValue]="null" disabled>Seleccione</option>
+              <option *ngFor="let g of grammages" [value]="g.id">{{g.name}}</option>
+            </select>
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Máquina</label>
+            <select formControlName="machine_id" class="form-control">
+              <option [ngValue]="null" disabled>Seleccione</option>
+              <option *ngFor="let m of machines" [value]="m.id">{{m.name}}</option>
+            </select>
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Lote / Vencimiento</label>
+            <input formControlName="lot_expires" class="form-control">
+          </div>
+          <div class="col-md-12 form-group">
+            <label>Persona responsable del análisis</label>
+            <input formControlName="analyzed" class="form-control">
+          </div>
+        </div>
+        <div class="form-actions mt-4">
+          <button type="button" class="btn btn-primary" (click)="nextStep()">Siguiente</button>
+          <button type="button" class="btn btn-secondary" (click)="cancelSampling()">Cancelar</button>
+        </div>
+      </div>
+
+      <div *ngIf="step==2">
+        <h4>Peso de las Bolsas (10 muestras)</h4>
+        <div class="row" formArrayName="package_weights">
+          <div *ngFor="let w of packageWeights.controls; let i=index" class="col-md-3 col-6">
+            <label>Peso {{i+1}}</label>
+            <input type="number" class="form-control" [formControlName]="i">
+          </div>
+        </div>
+        <div class="mt-3">
+          <label><strong>Promedio de Empaque:</strong></label>
+          <input formControlName="package_average" class="form-control w-25" readonly>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" (click)="prevStep()" type="button">Atrás</button>
+          <button class="btn btn-primary" (click)="nextStep()" type="button">Siguiente</button>
+        </div>
+      </div>
+
+      <div *ngIf="step==3">
+        <h4>Peso de las muestras individuales</h4>
+        <div formArrayName="items">
+          <div *ngFor="let item of items.controls; let i=index" [formGroupName]="i" class="border p-3 mb-2 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+              <label>Peso muestra AGM #{{i+1}}</label>
+              <button class="btn btn-outline-danger btn-sm" type="button" (click)="removeItem(i)"
+                *ngIf="items.length>1">Eliminar</button>
+            </div>
+            <input formControlName="sample_weight_agm" type="number" class="form-control mt-2">
+          </div>
+        </div>
+        <button class="btn btn-outline-primary mt-2" type="button" (click)="addItem()">+ Agregar Ítem</button>
+        <div class="form-actions mt-4">
+          <button class="btn btn-secondary" (click)="prevStep()" type="button">Atrás</button>
+          <button class="btn btn-success" type="button" (click)="onSubmit()" [disabled]="verificationForm.invalid">
+            Finalizar y Guardar
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content" *ngIf="selectedDetail">
+      <div class="modal-header border-bottom-0">
+        <h5 class="modal-title w-100 text-center fw-bold text-uppercase">
+          VERIFICACIÓN DE CUMPLIMIENTO DE CONTENIDO NETO
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-2 p-md-3">
+        <div class="report-header-container text-uppercase">
+          <div class="row m-0 border-bottom-dark">
+            <div class="col-3 border-end border-dark py-2 fw-bold bg-light small">FECHA DE</div>
+            <div class="col-3 border-end border-dark py-2 small">{{ selectedDetail.created_at | date:'dd/MM/yyyy' }}
+            </div>
+            <div class="col-3 border-end border-dark py-2 fw-bold bg-light small">MUESTREADO</div>
+            <div class="col-3 py-2 small">{{ selectedDetail.sampled }}</div>
+          </div>
+          <div class="row m-0 border-bottom-dark">
+            <div class="col-3 border-end border-dark py-2 fw-bold bg-light small">PRODUCTO</div>
+            <div class="col-9 py-2 small">
+              {{ selectedDetail.product?.name }} {{ selectedDetail.brand?.name }} {{ selectedDetail.grammage?.alias }}
+            </div>
+          </div>
+          <div class="row m-0 border-bottom-dark">
+            <div class="col-3 border-end border-dark py-2 fw-bold bg-light small">ANALIZADO POR:</div>
+            <div class="col-9 py-2 small">{{ selectedDetail.analyzed }}</div>
+          </div>
+          <div class="row m-0">
+            <div class="col-3 border-end border-dark py-2 fw-bold bg-light small">MAQUINA:</div>
+            <div class="col-3 border-end border-dark py-2 small">{{ selectedDetail.machine?.name }}</div>
+            <div class="col-3 border-end border-dark py-2 fw-bold bg-light small">LOTE / VENCE:</div>
+            <div class="col-3 py-2 small">{{ selectedDetail.lot_expires }}</div>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3">
+          <table class="table table-bordered table-sm text-center align-middle custom-table">
+            <thead class="bg-light">
+              <tr class="small fw-bold">
+                <th style="width: 5%;">ITEM</th>
+                <th style="width: 15%;">Q nom<br>(Cantidad nominal)</th>
+                <th style="width: 20%;">PESO DE LA MUESTRA AGM<br>(masa real del preempacado)</th>
+                <th style="width: 15%;">ATM<br>PESO PROMEDIO EMPAQUE</th>
+                <th style="width: 15%;">Qi<br>(Cantidad real)</th>
+                <th style="width: 15%;">ERROR T1</th>
+                <th style="width: 15%;">ERROR T2</th>
+              </tr>
+            </thead>
+            <tbody class="small">
+              <tr *ngFor="let item of detailItems; let i = index">
+                <td class="fw-bold bg-light">{{ i + 1 }}</td>
+                <td>{{ item.nominal_quantity }}g</td>
+                <td>{{ item.sample_weight_agm }}g</td>
+                <td>{{ item.average_weight }}g</td>
+                <td class="fw-bold">{{ item.actual_quantity }}g</td>
+
+                <td>
+                  <span [ngClass]="!item.error_t1 ? 'text-success' : 'text-danger fw-bold'">
+                    {{ !item.error_t1 ? 'CUMPLE' : 'FALLA' }}
+                  </span>
+                </td>
+                <td>
+                  <span [ngClass]="(!item.error_t2 && !item.error_t1) ? 'text-success' : 'text-danger fw-bold'">
+                    {{ (!item.error_t2 && !item.error_t1) ? 'CUMPLE' : 'FALLA' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer border-top-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar Detalle</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="responseModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow border-0">
+
+      <div class="modal-header" [ngClass]="modalType === 'success' ? 'bg-success' : 'bg-danger text-white'">
+        <h5 class="modal-title">
+          {{ modalType === 'success' ? 'Éxito' : 'Error en Validación' }}
+        </h5>
+        <button type="button" class="btn-close" [class.btn-close-white]="modalType === 'error'"
+          data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body text-center p-4">
+        <i [ngClass]="modalType === 'success' ? 'bi bi-check-circle text-success' : 'bi bi-exclamation-triangle text-danger'"
+          style="font-size: 3rem;"></i>
+
+        <p class="mt-3 fw-bold" style="white-space: pre-line;">
+          {{ modalMessage }}
+        </p>
+      </div>
+
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
   </div>
 </div>

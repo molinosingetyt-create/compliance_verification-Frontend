@@ -1,7 +1,0 @@
-{
-    "data": [
-        {"id": 1, "name": "Máquina 1"},
-        {"id": 2, "name": "Máquina 2"}
-    ],
-    "message": "Máquinas obtenidas exitosamente"
-}

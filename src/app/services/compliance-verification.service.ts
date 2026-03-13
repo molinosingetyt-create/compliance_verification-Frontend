@@ -2,6 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+/* ========================= */
+/* MODELOS */
+/* ========================= */
+
 export interface ComplianceVerificationItem {
   sample_weight_agm: string;
   average_weight: string;
@@ -18,16 +22,83 @@ export interface ComplianceVerificationForm {
   items: ComplianceVerificationItem[];
 }
 
+/* LISTADO */
+
+export interface ComplianceVerification {
+  id: number;
+  sampled: string;
+  analyzed: string;
+  lot_expires: string;
+  product_name: string;
+  machine_name: string;
+  status: number;
+  created_at: string;
+}
+
+/* DETALLE */
+
+export interface ComplianceVerificationDetail {
+  id: number;
+  item_compliance_verifications: any[];
+}
+
+/* ========================= */
+/* SERVICIO */
+/* ========================= */
+
 @Injectable({
   providedIn: 'root',
 })
 export class ComplianceVerificationService {
-  private apiUrl = 'http://localhost:8000'; // Cambia la URL si tu backend usa otro puerto o ruta
 
-  constructor(private http: HttpClient) {}
+  private apiUrl = 'http://localhost:8000/v1/compliance_verifications';
 
-  createComplianceVerification(data: ComplianceVerificationForm): Observable<any> {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    return this.http.post(`${this.apiUrl}/v1/compliance_verifications/create`, data, { headers });
+  constructor(private http: HttpClient) { }
+
+  /* ========================= */
+  /* CREAR VERIFICACIÓN */
+  /* ========================= */
+
+  createComplianceVerification(
+    data: ComplianceVerificationForm
+  ): Observable<any> {
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
+    return this.http.post(
+      `${this.apiUrl}/create`,
+      data,
+      { headers }
+    );
+
   }
+
+  /* ========================= */
+  /* LISTAR VERIFICACIONES */
+  /* ========================= */
+
+  getComplianceVerifications(): Observable<ComplianceVerification[]> {
+
+    return this.http.get<ComplianceVerification[]>(
+      `${this.apiUrl}/list-all`
+    );
+
+  }
+
+  /* ========================= */
+  /* DETALLE DE VERIFICACIÓN */
+  /* ========================= */
+
+  getComplianceVerificationDetail(
+    id: number
+  ): Observable<ComplianceVerificationDetail> {
+
+    return this.http.get<ComplianceVerificationDetail>(
+      `${this.apiUrl}/list/${id}`
+    );
+
+  }
+
 }
