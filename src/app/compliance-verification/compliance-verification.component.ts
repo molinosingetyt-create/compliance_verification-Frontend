@@ -14,7 +14,6 @@ declare var bootstrap: any;
   styleUrls: ['./compliance-verification.component.scss']
 })
 export class ComplianceVerificationComponent implements OnInit {
-  // Variables existentes
   verificationForm: FormGroup;
   step: number = 1;
   products: any[] = [];
@@ -24,7 +23,6 @@ export class ComplianceVerificationComponent implements OnInit {
   showForm: boolean = false;
   verifications: any[] = [];
 
-  // Variables para el Detalle
   detailItems: any[] = [];
   selectedDetail: any = null;
 
@@ -42,18 +40,14 @@ export class ComplianceVerificationComponent implements OnInit {
       product_id: [null, Validators.required],
       brand_id: [null, Validators.required],
       grammage_id: [null, Validators.required],
-      analyzed: ['', Validators.required],
+      // SE ELIMINÓ: analyzed (Persona responsable)
       machine_id: [null, Validators.required],
       lot_expires: ['', Validators.required],
       package_weights: this.fb.array(
-        Array(10).fill(0).map(() => this.fb.control('', Validators.required))
+        Array(10).fill(0).map(() => this.fb.control('', [Validators.required, Validators.min(0.01)]))
       ),
       package_average: [{ value: '', disabled: true }],
-      items: this.fb.array([
-        this.fb.group({
-          sample_weight_agm: ['', Validators.required]
-        })
-      ])
+      items: this.fb.array([])
     });
   }
 
@@ -64,6 +58,48 @@ export class ComplianceVerificationComponent implements OnInit {
       this.calculatePackageAverage();
     });
   }
+
+  // --- LÓGICA DE VALIDACIÓN POR PASOS ---
+
+  isStepValid(): boolean {
+    if (this.step === 1) {
+      const fields = ['sampled', 'product_id', 'brand_id', 'grammage_id', 'machine_id', 'lot_expires'];
+      return fields.every(f => this.verificationForm.get(f)?.valid);
+    }
+    if (this.step === 2) {
+      return this.packageWeights.valid;
+    }
+    return this.items.valid;
+  }
+
+  markCurrentStepAsTouched() {
+    if (this.step === 1) {
+      const fields = ['sampled', 'product_id', 'brand_id', 'grammage_id', 'machine_id', 'lot_expires'];
+      fields.forEach(f => this.verificationForm.get(f)?.markAsTouched());
+    } else if (this.step === 2) {
+      this.packageWeights.markAllAsTouched();
+    } else {
+      this.items.markAllAsTouched();
+    }
+    this.cdr.detectChanges();
+  }
+
+  nextStep() {
+    if (this.isStepValid()) {
+      this.step++;
+    } else {
+      this.markCurrentStepAsTouched();
+      this.showModal('Por favor, complete todos los campos requeridos en esta sección.', 'error');
+    }
+  }
+
+  prevStep() { this.step--; }
+
+  // --- GETTERS Y AUXILIARES ---
+
+  get items() { return this.verificationForm.get('items') as FormArray; }
+  get packageWeights(): FormArray { return this.verificationForm.get('package_weights') as FormArray; }
+
   loadCatalogs() {
     this.catalogService.getProducts().subscribe(res => this.products = res.data || res);
     this.catalogService.getBrands().subscribe(res => this.brands = res.data || res);
@@ -75,7 +111,7 @@ export class ComplianceVerificationComponent implements OnInit {
     this.complianceService.getComplianceVerifications().subscribe({
       next: (res: any) => {
         this.verifications = res.data || res || [];
-        this.cdr.detectChanges(); // Forzamos a Angular a detectar los nuevos datos
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error("ERROR LOADING VERIFICATIONS:", err);
@@ -88,6 +124,17 @@ export class ComplianceVerificationComponent implements OnInit {
   startSampling() {
     this.showForm = true;
     this.step = 1;
+    this.verificationForm.reset();
+
+    const itemsArray = this.items;
+    while (itemsArray.length !== 0) {
+      itemsArray.removeAt(0);
+    }
+
+    for (let i = 0; i < 98; i++) {
+      this.addItem();
+    }
+
     this.cdr.detectChanges();
   }
 
@@ -98,44 +145,24 @@ export class ComplianceVerificationComponent implements OnInit {
     this.loadVerifications();
   }
 
-  nextStep() { this.step++; }
-  prevStep() { this.step--; }
-
-  get items() { return this.verificationForm.get('items') as FormArray; }
-  get packageWeights(): FormArray { return this.verificationForm.get('package_weights') as FormArray; }
-
   addItem() {
     this.items.push(this.fb.group({
-      sample_weight_agm: ['', Validators.required]
+      sample_weight_agm: ['', [Validators.required, Validators.min(0)]]
     }));
-  }
-
-  removeItem(index: number) {
-    if (this.items.length > 1) this.items.removeAt(index);
   }
 
   calculatePackageAverage() {
     const weights = this.packageWeights.value.map((v: any) => Number(v) || 0);
     const total = weights.reduce((a: number, b: number) => a + b, 0);
-    const avg = total / weights.length;
+    const avg = weights.length > 0 ? total / weights.length : 0;
     this.verificationForm.patchValue({ package_average: avg.toFixed(2) }, { emitEvent: false });
-  }/* 
-
-  showModal(message: string, type: 'success' | 'error') {
-    this.modalMessage = message;
-    this.modalType = type;
-    setTimeout(() => {
-      const modalElement = document.getElementById('responseModal');
-      if (modalElement) new bootstrap.Modal(modalElement).show();
-    }, 100);
-  } */
+  }
 
   viewDetail(id: number) {
     this.complianceService.getComplianceVerificationDetail(id).subscribe({
       next: (res: any) => {
         this.selectedDetail = res;
         this.detailItems = res.item_compliance_verifications || [];
-
         this.cdr.detectChanges();
 
         const modalElement = document.getElementById('detailModal');
@@ -157,6 +184,8 @@ export class ComplianceVerificationComponent implements OnInit {
 
       const formData = {
         ...rawForm,
+        // Agregamos un valor por defecto para 'analyzed' ya que el backend lo requiere pero lo quitamos del UI
+        analyzed: rawForm.sampled,
         items: this.items.value.map((item: any) => {
           const diff = (Number(item.sample_weight_agm) - Number(globalAvg)).toFixed(2);
           return {
@@ -168,14 +197,8 @@ export class ComplianceVerificationComponent implements OnInit {
 
       this.complianceService.createComplianceVerification(formData).subscribe({
         next: (res: any) => {
-          // 1. Mostramos la modal de éxito
           this.showModal(res.detail || '¡Verificación creada exitosamente!', 'success');
-
-          // 2. Ejecutamos la limpieza y volvemos al listado
-          // Esto pone showForm = false, resetea el form y llama a loadVerifications()
           this.cancelSampling();
-
-          // 3. Forzamos la actualización de la vista
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -183,17 +206,14 @@ export class ComplianceVerificationComponent implements OnInit {
         }
       });
     } else {
-      this.verificationForm.markAllAsTouched();
+      this.markCurrentStepAsTouched();
       this.showModal('Por favor, complete todos los campos requeridos.', 'error');
     }
   }
 
-  // Función auxiliar para procesar errores de validación 422
   private handleError(err: any) {
     let errorMessage = 'Error en la solicitud';
-
     if (err.status === 422 && err.error?.detail) {
-      // Extraemos los mensajes del objeto de error de FastAPI
       errorMessage = err.error.detail.map((e: any) => {
         const field = e.loc[e.loc.length - 1];
         return `Campo "${field}": ${e.msg}`;
@@ -201,14 +221,13 @@ export class ComplianceVerificationComponent implements OnInit {
     } else {
       errorMessage = err.error?.detail || 'Error inesperado en el servidor';
     }
-
     this.showModal(errorMessage, 'error');
   }
 
   showModal(message: string, type: 'success' | 'error') {
     this.modalMessage = message;
-    this.modalType = type; // CRITICO: Esto debe cambiar a 'error'
-    this.cdr.detectChanges(); // Asegura que el HTML reaccione al cambio de color
+    this.modalType = type;
+    this.cdr.detectChanges();
 
     const modalElement = document.getElementById('responseModal');
     if (modalElement) {
@@ -216,5 +235,25 @@ export class ComplianceVerificationComponent implements OnInit {
       modal.show();
     }
   }
+  obtenerResultadoT1(status: number): string {
+    if (status === 2 || status === 3) {
+      return 'NO CUMPLE';
+    }
+    return 'CUMPLE';
+  }
 
+  // Solo falla si es estrictamente status 3
+  obtenerResultadoT2(status: number): string {
+    if (status === 3) {
+      return 'NO CUMPLE';
+    }
+    return 'CUMPLE';
+  }
+
+  // Colores: Rojo si hay cualquier error (2 o 3) en T1, o 3 en T2
+  claseResultado(status: number, tipo: 'T1' | 'T2'): string {
+    if (tipo === 'T1' && (status === 2 || status === 3)) return 'text-danger fw-bold';
+    if (tipo === 'T2' && status === 3) return 'text-danger fw-bold';
+    return 'text-success';
+  }
 }

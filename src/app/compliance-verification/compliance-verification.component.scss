@@ -12,13 +12,152 @@ $header-bg: #f8f9fa;
 
 /* CONTENEDOR PRINCIPAL */
 .compliance-container {
-  max-width: 1100px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
-  padding: 2.5rem 2rem;
-  margin: auto;
-  margin-top: 2rem;
+
+  /* CONTENEDOR DE CUADRÍCULAS DE MUESTREO (PASOS 2 Y 3) */
+  .sampling-grid {
+    // max-height: 55vh; // Puedes mantener o quitar el scroll segun prefieras para Paso 2
+    // overflow-y: auto;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    /* GRUPO DE ENTRADA UNIFICADO */
+    .custom-input-group {
+      display: flex !important; // Asegura que se comporte como fila
+      align-items: stretch; // Fuerza a que ambos tengan la misma altura
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #ced4da; // Borde único para todo el conjunto
+
+      /* ETIQUETA IZQUIERDA (Gris) */
+      .input-group-text {
+        // Ancho flexible pero alineado para Paso 2 (ej: "Bolsa #1")
+        min-width: 60px;
+        padding-left: 10px;
+        padding-right: 10px;
+
+        background-color: #f1f3f5;
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: #495057;
+        border: none; // Quitamos bordes internos
+        border-right: 1px solid #ced4da; // Solo la línea divisoria
+        border-radius: 0;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-transform: uppercase; // Le da un toque más formal
+      }
+
+      /* CAMPO DE ENTRADA (Blanco) */
+      input.form-control {
+        font-size: 0.9rem;
+        padding: 8px;
+        border: none !important; // Quitamos el borde propio del input
+        border-radius: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important; // Eliminamos la sombra azul de Bootstrap
+        text-align: center;
+
+        &:focus {
+          background-color: #fff9db; // Color sutil para saber qué estás editando
+        }
+
+        /* Ocultar flechas de número */
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        -moz-appearance: textfield;
+      }
+    }
+  }
+
+  .readonly-group {
+    background-color: #f1f3f5 !important; // Fondo sutil para indicar que es automático
+    border: 1px solid #ced4da !important;
+
+    input.form-control[readonly] {
+      background-color: transparent !important;
+      font-weight: 700;
+      color: $primary-dark;
+      cursor: default;
+      border: none !important; // Quitamos el borde interno del input
+    }
+
+    .input-group-text {
+      background-color: #dee2e6 !important;
+      border: none !important;
+      border-left: 1px solid #ced4da !important; // Solo línea divisoria a la izquierda
+      min-width: 45px !important; // Para que la "g" no se vea apretada
+      color: #495057;
+      border-radius: 0 !important;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 25px;
+    align-items: center;
+
+    .btn {
+      flex: 1; // Para que ambos botones tengan el mismo ancho
+      height: 48px;
+      font-weight: 600;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+
+      // Estilo para el botón Siguiente
+      &.btn-primary {
+        background-color: #0d6efd; // Azul vibrante del paso 2
+        border: none;
+
+        &:hover {
+          background-color: #0b5ed7;
+          transform: translateY(-1px);
+        }
+      }
+
+      // Estilo para el botón Cancelar (gris como el botón Atrás)
+      &.btn-secondary {
+        background-color: #6c757d; // Gris del botón Atrás
+        border: none;
+
+        &:hover {
+          background-color: #5a6268;
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+
+  /* Ajuste específico para que en móviles los botones no se amontonen */
+  @media (max-width: 576px) {
+    .sampling-grid {
+      padding: 8px;
+    }
+
+    .custom-input-group .input-group-text {
+      min-width: 50px;
+      font-size: 0.7rem;
+    }
+
+    .form-actions {
+      flex-direction: column;
+
+      .btn {
+        width: 100%;
+      }
+    }
+  }
+
 }
 
 /* TITULOS */
@@ -231,7 +370,6 @@ h2 {
     width: 100%;
   }
 
-  /* Ajustes Encabezado Reporte */
   .report-header-container {
 
     .header-label,
@@ -249,7 +387,6 @@ h2 {
     }
   }
 
-  /* Tabla Detalle con Scroll */
   .table-responsive {
     border: 1px solid #dee2e6;
 
@@ -275,9 +412,8 @@ h2 {
   }
 }
 
-/* En tu archivo styles.scss o el del componente */
 .modal-body p {
-  white-space: pre-line; /* Permite que el .join('\n') funcione visualmente */
+  white-space: pre-line;
   line-height: 1.5;
   font-size: 0.9rem;
 }

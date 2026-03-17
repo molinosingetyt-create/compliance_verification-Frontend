@@ -12,26 +12,39 @@
       <table class="table table-bordered table-striped table-hover verification-table">
         <thead class="table-dark">
           <tr>
-            <th>ID</th>
             <th>Fecha</th>
-            <th>Muestreador</th>
             <th>Producto</th>
+            <th>Marca</th>
+            <th>Gramaje</th>
             <th>Máquina</th>
-            <th>Analista</th>
-            <th>Lote</th>
+            <th>Tolerancia</th>
+            <th>Promedio Peso(Con Empaque)</th>
+            <th>Promedio Peso(Sin Empaque)</th>
+            <th># Error T1</th>
+            <th># Error T2</th>
+            <th>Desviacion</th>
+            <th># Uni. Debajo contenido neto</th>
+            <th>% Uni. Debajo contenido neto</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let v of verifications">
-            <td>{{v.id}}</td>
             <td>{{v.created_at | date:'short'}}</td>
-            <td>{{v.sampled}}</td>
             <td>{{v.product_name}}</td>
+            <td>{{v.brand_name}}</td>
+            <td>{{v.grammage_name}}</td>
             <td>{{v.machine_name}}</td>
-            <td>{{v.analyzed}}</td>
-            <td>{{v.lot_expires}}</td>
+            <td>{{v.tolerance}}</td>
+            <td>{{v.avg_gross_weight}}</td>
+            <td>{{v.avg_net_weight}}</td>
+            <td>{{v.t1_errors_count}}</td>
+            <td>{{v.t2_errors_count}}</td>
+            <td>{{v.standard_deviation}}</td>
+            <td>{{v.under_nominal_count}}</td>
+            <td>{{v.percentage_under_nominal}}%</td>
+
             <td>
               <span class="badge-status"
                 [ngClass]="{'bg-success-soft': v.status == 1, 'bg-danger-soft': v.status == 2}">
@@ -53,94 +66,134 @@
   </div>
 
   <div *ngIf="showForm">
-    <h2 class="text-center">Nueva Verificación - Paso {{step}} de 3</h2>
+    <h2 class="text-center mb-4">Nueva Verificación - Paso {{step}} de 3</h2>
     <form [formGroup]="verificationForm">
 
       <div *ngIf="step==1">
-        <h4>Datos de la Muestra</h4>
-        <div class="row">
-          <div class="col-md-6 form-group">
-            <label>Persona que realiza el muestreo</label>
-            <input formControlName="sampled" class="form-control">
+        <h4 class="mb-3 border-bottom pb-2">Datos de la Muestra</h4>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Persona que realiza el muestreo</label>
+            <input formControlName="sampled" class="form-control"
+              [class.is-invalid]="verificationForm.get('sampled')?.touched && verificationForm.get('sampled')?.invalid">
           </div>
-          <div class="col-md-6 form-group">
-            <label>Producto</label>
-            <select formControlName="product_id" class="form-control">
-              <option [ngValue]="null" disabled>Seleccione</option>
+
+          <div class="col-md-6">
+            <label class="form-label">Producto</label>
+            <select formControlName="product_id" class="form-select"
+              [class.is-invalid]="verificationForm.get('product_id')?.touched && verificationForm.get('product_id')?.invalid">
+              <option [ngValue]="null" disabled>Seleccione...</option>
               <option *ngFor="let p of products" [value]="p.id">{{p.name}}</option>
             </select>
           </div>
-          <div class="col-md-6 form-group">
-            <label>Marca</label>
-            <select formControlName="brand_id" class="form-control">
-              <option [ngValue]="null" disabled>Seleccione</option>
+
+          <div class="col-md-6">
+            <label class="form-label">Marca</label>
+            <select formControlName="brand_id" class="form-select"
+              [class.is-invalid]="verificationForm.get('brand_id')?.touched && verificationForm.get('brand_id')?.invalid">
+              <option [ngValue]="null" disabled>Seleccione...</option>
               <option *ngFor="let b of brands" [value]="b.id">{{b.name}}</option>
             </select>
           </div>
-          <div class="col-md-6 form-group">
-            <label>Gramaje</label>
-            <select formControlName="grammage_id" class="form-control">
-              <option [ngValue]="null" disabled>Seleccione</option>
+
+          <div class="col-md-6">
+            <label class="form-label">Gramaje</label>
+            <select formControlName="grammage_id" class="form-select"
+              [class.is-invalid]="verificationForm.get('grammage_id')?.touched && verificationForm.get('grammage_id')?.invalid">
+              <option [ngValue]="null" disabled>Seleccione...</option>
               <option *ngFor="let g of grammages" [value]="g.id">{{g.name}}</option>
             </select>
           </div>
-          <div class="col-md-6 form-group">
-            <label>Máquina</label>
-            <select formControlName="machine_id" class="form-control">
-              <option [ngValue]="null" disabled>Seleccione</option>
+
+          <div class="col-md-6">
+            <label class="form-label">Máquina</label>
+            <select formControlName="machine_id" class="form-select"
+              [class.is-invalid]="verificationForm.get('machine_id')?.touched && verificationForm.get('machine_id')?.invalid">
+              <option [ngValue]="null" disabled>Seleccione...</option>
               <option *ngFor="let m of machines" [value]="m.id">{{m.name}}</option>
             </select>
           </div>
-          <div class="col-md-6 form-group">
-            <label>Lote / Vencimiento</label>
-            <input formControlName="lot_expires" class="form-control">
-          </div>
-          <div class="col-md-12 form-group">
-            <label>Persona responsable del análisis</label>
-            <input formControlName="analyzed" class="form-control">
+
+          <div class="col-md-6">
+            <label class="form-label">Lote / Vencimiento</label>
+            <input formControlName="lot_expires" class="form-control"
+              [class.is-invalid]="verificationForm.get('lot_expires')?.touched && verificationForm.get('lot_expires')?.invalid">
           </div>
         </div>
+
         <div class="form-actions mt-4">
-          <button type="button" class="btn btn-primary" (click)="nextStep()">Siguiente</button>
-          <button type="button" class="btn btn-secondary" (click)="cancelSampling()">Cancelar</button>
+          <button class="btn btn-secondary" (click)="cancelSampling()" type="button">
+            <i class="bi bi-x-circle pe-2"></i> Cancelar
+          </button>
+          <button class="btn btn-primary" (click)="nextStep()" type="button">
+            Siguiente <i class="bi bi-arrow-right ps-2"></i>
+          </button>
         </div>
       </div>
 
       <div *ngIf="step==2">
-        <h4>Peso de las Bolsas (10 muestras)</h4>
-        <div class="row" formArrayName="package_weights">
-          <div *ngFor="let w of packageWeights.controls; let i=index" class="col-md-3 col-6">
-            <label>Peso {{i+1}}</label>
-            <input type="number" class="form-control" [formControlName]="i">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Peso de las Bolsas Vacías (10 muestras)</h4>
+        </div>
+
+        <div class="row g-2 sampling-grid" formArrayName="package_weights">
+          <div *ngFor="let w of packageWeights.controls; let i=index" class="col-12 col-md-6 col-lg-4">
+            <div class="input-group custom-input-group" [class.border-danger]="w.touched && w.invalid">
+              <span class="input-group-text justify-content-center"
+                [class.bg-danger-soft]="w.touched && w.invalid">Bolsa #{{i+1}}</span>
+              <input type="number" class="form-control" [formControlName]="i" placeholder="0.0"
+                [class.is-invalid]="w.touched && w.invalid">
+            </div>
           </div>
         </div>
-        <div class="mt-3">
-          <label><strong>Promedio de Empaque:</strong></label>
-          <input formControlName="package_average" class="form-control w-25" readonly>
+
+        <div class="mt-4 border-top pt-3">
+          <label class="mb-2"><strong>Promedio de Empaque Calculado:</strong></label>
+          <div class="row">
+            <div class="col-12 col-md-4 col-lg-3">
+              <div class="input-group custom-input-group readonly-group">
+                <input formControlName="package_average" class="form-control text-center shadow-none" readonly>
+                <span class="input-group-text justify-content-center">g</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="form-actions">
-          <button class="btn btn-secondary" (click)="prevStep()" type="button">Atrás</button>
-          <button class="btn btn-primary" (click)="nextStep()" type="button">Siguiente</button>
+
+        <div class="form-actions mt-4 d-flex gap-2">
+          <button class="btn btn-secondary flex-grow-1" (click)="prevStep()" type="button">
+            <i class="bi bi-arrow-left pe-2"></i> Atrás
+          </button>
+          <button class="btn btn-primary flex-grow-1" (click)="nextStep()" type="button">
+            Siguiente <i class="bi bi-arrow-right ps-2"></i>
+          </button>
         </div>
       </div>
 
       <div *ngIf="step==3">
-        <h4>Peso de las muestras individuales</h4>
-        <div formArrayName="items">
-          <div *ngFor="let item of items.controls; let i=index" [formGroupName]="i" class="border p-3 mb-2 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center">
-              <label>Peso muestra AGM #{{i+1}}</label>
-              <button class="btn btn-outline-danger btn-sm" type="button" (click)="removeItem(i)"
-                *ngIf="items.length>1">Eliminar</button>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Registro de Pesos (98 muestras)</h4>
+          <span class="badge bg-info text-dark shadow-sm">Total ítems: {{items.length}}</span>
+        </div>
+
+        <div class="row g-2 sampling-grid" formArrayName="items">
+          <div *ngFor="let item of items.controls; let i=index" [formGroupName]="i" class="col-6 col-md-3 col-lg-2">
+            <div class="input-group custom-input-group"
+              [class.border-danger]="item.get('sample_weight_agm')?.touched && item.get('sample_weight_agm')?.invalid">
+              <span class="input-group-text justify-content-center"
+                [class.bg-danger-soft]="item.get('sample_weight_agm')?.touched && item.get('sample_weight_agm')?.invalid">#{{i+1}}</span>
+              <input formControlName="sample_weight_agm" type="number" class="form-control text-center"
+                placeholder="0.0"
+                [class.is-invalid]="item.get('sample_weight_agm')?.touched && item.get('sample_weight_agm')?.invalid">
             </div>
-            <input formControlName="sample_weight_agm" type="number" class="form-control mt-2">
           </div>
         </div>
-        <button class="btn btn-outline-primary mt-2" type="button" (click)="addItem()">+ Agregar Ítem</button>
-        <div class="form-actions mt-4">
-          <button class="btn btn-secondary" (click)="prevStep()" type="button">Atrás</button>
-          <button class="btn btn-success" type="button" (click)="onSubmit()" [disabled]="verificationForm.invalid">
-            Finalizar y Guardar
+
+        <div class="form-actions mt-4 d-flex gap-2">
+          <button class="btn btn-secondary flex-grow-1" (click)="prevStep()" type="button">
+            <i class="bi bi-arrow-left pe-2"></i> Atrás
+          </button>
+          <button class="btn btn-success flex-grow-1" type="button" (click)="onSubmit()">
+            <i class="bi bi-check-circle pe-2"></i> Guardar (98 ítems)
           </button>
         </div>
       </div>
@@ -190,7 +243,6 @@
             <thead class="bg-light">
               <tr class="small fw-bold">
                 <th style="width: 5%;">ITEM</th>
-                <th style="width: 15%;">Q nom<br>(Cantidad nominal)</th>
                 <th style="width: 20%;">PESO DE LA MUESTRA AGM<br>(masa real del preempacado)</th>
                 <th style="width: 15%;">ATM<br>PESO PROMEDIO EMPAQUE</th>
                 <th style="width: 15%;">Qi<br>(Cantidad real)</th>
@@ -201,20 +253,16 @@
             <tbody class="small">
               <tr *ngFor="let item of detailItems; let i = index">
                 <td class="fw-bold bg-light">{{ i + 1 }}</td>
-                <td>{{ item.nominal_quantity }}g</td>
                 <td>{{ item.sample_weight_agm }}g</td>
                 <td>{{ item.average_weight }}g</td>
                 <td class="fw-bold">{{ item.actual_quantity }}g</td>
 
-                <td>
-                  <span [ngClass]="!item.error_t1 ? 'text-success' : 'text-danger fw-bold'">
-                    {{ !item.error_t1 ? 'CUMPLE' : 'FALLA' }}
-                  </span>
+                <td [ngClass]="claseResultado(item.status, 'T1')">
+                  {{ obtenerResultadoT1(item.status) }}
                 </td>
-                <td>
-                  <span [ngClass]="(!item.error_t2 && !item.error_t1) ? 'text-success' : 'text-danger fw-bold'">
-                    {{ (!item.error_t2 && !item.error_t1) ? 'CUMPLE' : 'FALLA' }}
-                  </span>
+
+                <td [ngClass]="claseResultado(item.status, 'T2')">
+                  {{ obtenerResultadoT2(item.status) }}
                 </td>
               </tr>
             </tbody>
@@ -232,7 +280,6 @@
 <div class="modal fade" id="responseModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content shadow border-0">
-
       <div class="modal-header" [ngClass]="modalType === 'success' ? 'bg-success' : 'bg-danger text-white'">
         <h5 class="modal-title">
           {{ modalType === 'success' ? 'Éxito' : 'Error en Validación' }}
@@ -240,16 +287,13 @@
         <button type="button" class="btn-close" [class.btn-close-white]="modalType === 'error'"
           data-bs-dismiss="modal"></button>
       </div>
-
       <div class="modal-body text-center p-4">
         <i [ngClass]="modalType === 'success' ? 'bi bi-check-circle text-success' : 'bi bi-exclamation-triangle text-danger'"
           style="font-size: 3rem;"></i>
-
         <p class="mt-3 fw-bold" style="white-space: pre-line;">
           {{ modalMessage }}
         </p>
       </div>
-
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
       </div>
