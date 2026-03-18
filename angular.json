@@ -71,6 +71,11 @@
               "buildTarget": "Frontend:build:development"
             }
           },
+          "options": {
+            "allowedHosts": [
+              "tuitionless-obtrusive-beau.ngrok-free.dev"
+            ]
+          },
           "defaultConfiguration": "development"
         },
         "test": {
