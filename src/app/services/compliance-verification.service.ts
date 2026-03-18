@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 /* ========================= */
 /* MODELOS */
@@ -51,7 +52,7 @@ export interface ComplianceVerificationDetail {
 })
 export class ComplianceVerificationService {
 
-  private apiUrl = 'http://localhost:8000/v1/compliance_verifications';
+  private apiUrl = `${environment.apiUrl}/v1/compliance_verifications`;
 
   constructor(private http: HttpClient) { }
 
