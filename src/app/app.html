@@ -1,5 +1,24 @@
-<div class="main-container">
-  <app-compliance-verification></app-compliance-verification>
+<div class="app-shell">
+  <header class="app-header">
+    <div class="app-header__inner">
+      <div class="app-header__brand">
+        <div class="app-header__mark" aria-hidden="true">
+          <img
+            src="logo-la-nieve.svg"
+            class="app-header__mark-img"
+            width="542"
+            height="726"
+            alt=""
+          />
+        </div>
+        <div class="app-header__text">
+          <h1 class="app-header__title">Compliance Verification</h1>
+          <p class="app-header__subtitle">Verificación de contenido neto</p>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="app-main" id="main-content">
+    <router-outlet />
+  </main>
 </div>
-
-<router-outlet></router-outlet>

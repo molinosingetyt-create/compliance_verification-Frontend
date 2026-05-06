@@ -1,3 +1,64 @@
-@use 'bootstrap/scss/bootstrap';
+/* Bootstrap CSS se carga vía angular.json (bootstrap.min.css) */
 
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --app-font-primary: 'Cooper Md BT', 'Cooper Black', Georgia, serif;
+  --app-font-secondary: 'D-DIN Condensed Bold', 'D-DIN Condensed', 'DIN Condensed', 'Arial Narrow', Arial, sans-serif;
+  --app-bg: #ffffff;
+  --app-surface: #ffffff;
+  --app-radius: 12px;
+
+  /* La Nieve — paleta principal (manual de marca) */
+  --brand-navy: #103847;
+  --brand-beige: #fcefd9;
+  --brand-azul: #0066cc;
+  --brand-naranja: #d6661b;
+  --brand-dorado: #a37f3e;
+  --brand-amarillo-insuperable: #ffe000;
+  --brand-rojo: #dd0a1e;
+  /* Complementarios */
+  --brand-rojo-oscuro: #c1272d;
+  --brand-amarillo-dorado: #e8c04c;
+
+  --app-text: var(--brand-navy);
+  --app-muted: var(--brand-navy);
+  --app-border: var(--brand-beige);
+
+  /* Botones azul */
+  --brand-azul-hover: var(--brand-navy);
+
+  --brand-la-nieve-rojo: var(--brand-rojo);
+  --brand-la-nieve-rojo-hover: #b80818;
+  --brand-la-insuperable-amarillo: var(--brand-amarillo-insuperable);
+
+  /* Estados (sin verde en manual: cumple → azul / no cumple → rojo corporativo) */
+  --brand-status-ok-bg: #e8f1fb;
+  --brand-status-ok-text: var(--brand-navy);
+  --brand-status-ok-border: rgba(0, 102, 204, 0.28);
+  --brand-status-no-bg: var(--brand-beige);
+  --brand-status-no-text: var(--brand-rojo-oscuro);
+  --brand-status-no-border: rgba(193, 39, 45, 0.28);
+
+  --brand-strong-ok-text: var(--brand-azul);
+}
+
+body {
+  margin: 0;
+  font-family: var(--app-font-secondary);
+  color: var(--app-text);
+  background: var(--app-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+
+h1,
+h2,
+h3 {
+  font-family: var(--app-font-primary);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--app-font-secondary);
+}

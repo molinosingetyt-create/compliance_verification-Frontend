@@ -1,297 +1,308 @@
-<div class="container mt-4 compliance-container">
+<div class="compliance-page">
+  <div class="container py-4 compliance-container">
 
-  <div *ngIf="!showForm">
-    <div class="header-responsive">
-      <h2 class="title-page">Verificaciones de Cumplimiento</h2>
-      <button class="btn btn-success sampling-btn" (click)="startSampling()">
-        Realizar Muestreo
-      </button>
-    </div>
-
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped table-hover verification-table">
-        <thead class="table-dark">
-          <tr>
-            <th>Fecha</th>
-            <th>Producto</th>
-            <th>Marca</th>
-            <th>Gramaje</th>
-            <th>Máquina</th>
-            <th>Tolerancia</th>
-            <th>Promedio Peso(Con Empaque)</th>
-            <th>Promedio Peso(Sin Empaque)</th>
-            <th># Error T1</th>
-            <th># Error T2</th>
-            <th>Desviacion</th>
-            <th># Uni. Debajo contenido neto</th>
-            <th>% Uni. Debajo contenido neto</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let v of verifications">
-            <td>{{v.created_at | date:'short'}}</td>
-            <td>{{v.product_name}}</td>
-            <td>{{v.brand_name}}</td>
-            <td>{{v.grammage_name}}</td>
-            <td>{{v.machine_name}}</td>
-            <td>{{v.tolerance}}</td>
-            <td>{{v.avg_gross_weight}}</td>
-            <td>{{v.avg_net_weight}}</td>
-            <td>{{v.t1_errors_count}}</td>
-            <td>{{v.t2_errors_count}}</td>
-            <td>{{v.standard_deviation}}</td>
-            <td>{{v.under_nominal_count}}</td>
-            <td>{{v.percentage_under_nominal}}%</td>
-
-            <td>
-              <span class="badge-status"
-                [ngClass]="{'bg-success-soft': v.status == 1, 'bg-danger-soft': v.status == 2}">
-                {{ v.status == 1 ? 'CUMPLE' : 'NO CUMPLE' }}
-              </span>
-            </td>
-            <td class="text-center">
-              <button class="btn btn-action-view" (click)="viewDetail(v.id)" title="Ver detalle">
-                <i class="bi bi-eye-fill"></i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="verifications.length === 0" class="text-center p-3">
-        No se encontraron registros.
+    @if (listLoading() && !showForm) {
+        <div class="compliance-state compliance-state--loading" role="status">
+        <div class="spinner-border text-brand-azul" aria-hidden="true"></div>
+        <span>Cargando verificaciones…</span>
       </div>
-    </div>
-  </div>
+    }
 
-  <div *ngIf="showForm">
-    <h2 class="text-center mb-4">Nueva Verificación - Paso {{step}} de 3</h2>
-    <form [formGroup]="verificationForm">
+    @if (listError(); as err) {
+      <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ err }}</span>
+      </div>
+    }
 
-      <div *ngIf="step==1">
-        <h4 class="mb-3 border-bottom pb-2">Datos de la Muestra</h4>
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Persona que realiza el muestreo</label>
-            <input formControlName="sampled" class="form-control"
-              [class.is-invalid]="verificationForm.get('sampled')?.touched && verificationForm.get('sampled')?.invalid">
+    @if (!showForm) {
+      <div class="compliance-list">
+        <div class="header-responsive">
+          <div class="header-responsive__titles">
+            <h2 class="title-page">Verificaciones de cumplimiento</h2>
+            <p class="title-page__hint">Histórico de muestreos y métricas de contenido neto</p>
           </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Producto</label>
-            <select formControlName="product_id" class="form-select"
-              [class.is-invalid]="verificationForm.get('product_id')?.touched && verificationForm.get('product_id')?.invalid">
-              <option [ngValue]="null" disabled>Seleccione...</option>
-              <option *ngFor="let p of products" [value]="p.id">{{p.name}}</option>
-            </select>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Marca</label>
-            <select formControlName="brand_id" class="form-select"
-              [class.is-invalid]="verificationForm.get('brand_id')?.touched && verificationForm.get('brand_id')?.invalid">
-              <option [ngValue]="null" disabled>Seleccione...</option>
-              <option *ngFor="let b of brands" [value]="b.id">{{b.name}}</option>
-            </select>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Gramaje</label>
-            <select formControlName="grammage_id" class="form-select"
-              [class.is-invalid]="verificationForm.get('grammage_id')?.touched && verificationForm.get('grammage_id')?.invalid">
-              <option [ngValue]="null" disabled>Seleccione...</option>
-              <option *ngFor="let g of grammages" [value]="g.id">{{g.name}}</option>
-            </select>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Máquina</label>
-            <select formControlName="machine_id" class="form-select"
-              [class.is-invalid]="verificationForm.get('machine_id')?.touched && verificationForm.get('machine_id')?.invalid">
-              <option [ngValue]="null" disabled>Seleccione...</option>
-              <option *ngFor="let m of machines" [value]="m.id">{{m.name}}</option>
-            </select>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Lote / Vencimiento</label>
-            <input formControlName="lot_expires" class="form-control"
-              [class.is-invalid]="verificationForm.get('lot_expires')?.touched && verificationForm.get('lot_expires')?.invalid">
-          </div>
-        </div>
-
-        <div class="form-actions mt-4">
-          <button class="btn btn-secondary" (click)="cancelSampling()" type="button">
-            <i class="bi bi-x-circle pe-2"></i> Cancelar
-          </button>
-          <button class="btn btn-primary" (click)="nextStep()" type="button">
-            Siguiente <i class="bi bi-arrow-right ps-2"></i>
+          <button type="button" class="btn btn-success sampling-btn" (click)="startSampling()">
+            <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
+            Realizar muestreo
           </button>
         </div>
-      </div>
 
-      <div *ngIf="step==2">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="mb-0">Peso de las Bolsas Vacías (10 muestras)</h4>
-        </div>
-
-        <div class="row g-2 sampling-grid" formArrayName="package_weights">
-          <div *ngFor="let w of packageWeights.controls; let i=index" class="col-12 col-md-6 col-lg-4">
-            <div class="input-group custom-input-group" [class.border-danger]="w.touched && w.invalid">
-              <span class="input-group-text justify-content-center"
-                [class.bg-danger-soft]="w.touched && w.invalid">Bolsa #{{i+1}}</span>
-              <input type="number" class="form-control" [formControlName]="i" placeholder="0.0"
-                [class.is-invalid]="w.touched && w.invalid">
+        <div class="verification-cards-wrap">
+          @for (v of verifications(); track trackByVerificationId($index, v)) {
+            <article class="verification-card">
+              <div class="verification-card__head">
+                <time class="verification-card__date" [attr.datetime]="v.created_at">{{ v.created_at | date:'short' }}</time>
+                <span class="badge-status"
+                  [class.bg-success-soft]="v.status === 1"
+                  [class.bg-danger-soft]="v.status === 2">
+                  {{ v.status === 1 ? 'CUMPLE' : 'NO CUMPLE' }}
+                </span>
+                <button type="button" class="btn btn-action-view btn-action-view--compact" (click)="viewDetail(v.id)"
+                  [attr.aria-label]="'Ver detalle de verificación ' + v.id">
+                  <i class="bi bi-eye-fill" aria-hidden="true"></i>
+                </button>
+              </div>
+              <p class="verification-card__line"
+                [attr.title]="(v.product_name || '') + ' · ' + (v.brand_name || '') + ' · ' + (v.grammage_name || '')">
+                <span class="verification-card__label">Producto</span>
+                {{ v.product_name }} · {{ v.brand_name }} · {{ v.grammage_name }}
+              </p>
+              <p class="verification-card__line verification-card__line--muted">
+                <span class="verification-card__label">Máquina</span>
+                {{ v.machine_name }}
+              </p>
+              <dl class="verification-card__metrics" aria-label="Métricas de la verificación">
+                <div><dt>Tol.</dt><dd>{{ v.tolerance }}</dd></div>
+                <div><dt>P. c/emp.</dt><dd>{{ v.avg_gross_weight }}</dd></div>
+                <div><dt>P. neto</dt><dd>{{ v.avg_net_weight }}</dd></div>
+                <div><dt>Desv.</dt><dd>{{ v.standard_deviation }}</dd></div>
+                <div><dt>Err. T1</dt><dd>{{ v.t1_errors_count }}</dd></div>
+                <div><dt>Err. T2</dt><dd>{{ v.t2_errors_count }}</dd></div>
+                <div><dt>&lt; nominal</dt><dd>{{ v.under_nominal_count }}</dd></div>
+                <div><dt>% &lt; nom.</dt><dd>{{ v.percentage_under_nominal }}%</dd></div>
+              </dl>
+            </article>
+          }
+          @if (!listLoading() && verifications().length === 0) {
+            <div class="compliance-empty text-center py-5">
+              <i class="bi bi-inbox compliance-empty__icon" aria-hidden="true"></i>
+              <p class="mb-0 fw-medium">No hay registros de verificación.</p>
+              <p class="text-muted small mb-0">Inicie un muestreo para crear el primero.</p>
             </div>
-          </div>
+          }
         </div>
+      </div>
+    }
 
-        <div class="mt-4 border-top pt-3">
-          <label class="mb-2"><strong>Promedio de Empaque Calculado:</strong></label>
-          <div class="row">
-            <div class="col-12 col-md-4 col-lg-3">
-              <div class="input-group custom-input-group readonly-group">
-                <input formControlName="package_average" class="form-control text-center shadow-none" readonly>
-                <span class="input-group-text justify-content-center">g</span>
+    @if (showForm) {
+      <div class="compliance-wizard">
+        <div class="wizard-progress mb-4" aria-label="Progreso del formulario">
+          @for (s of [1,2,3]; track s) {
+            <span class="wizard-progress__step"
+              [class.wizard-progress__step--done]="step > s"
+              [class.wizard-progress__step--current]="step === s">
+              {{ s }}
+            </span>
+          }
+        </div>
+        <h2 class="wizard-title text-center mb-4">Nueva verificación — Paso {{ step }} de 3</h2>
+        <form [formGroup]="verificationForm" (ngSubmit)="$event.preventDefault()">
+
+          @if (step === 1) {
+            <div>
+              <h3 class="section-title mb-3">Datos de la muestra</h3>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="sampled">Persona que realiza el muestreo</label>
+                  <input id="sampled" formControlName="sampled" class="form-control" autocomplete="name"
+                    [class.is-invalid]="verificationForm.get('sampled')?.touched && verificationForm.get('sampled')?.invalid">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="product_id">Producto</label>
+                  <select id="product_id" formControlName="product_id" class="form-select"
+                    [class.is-invalid]="verificationForm.get('product_id')?.touched && verificationForm.get('product_id')?.invalid">
+                    <option [ngValue]="null" disabled>Seleccione…</option>
+                    @for (p of products(); track p.id) {
+                      <option [ngValue]="p.id">{{ p.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="brand_id">Marca</label>
+                  <select id="brand_id" formControlName="brand_id" class="form-select"
+                    [class.is-invalid]="verificationForm.get('brand_id')?.touched && verificationForm.get('brand_id')?.invalid">
+                    <option [ngValue]="null" disabled>Seleccione…</option>
+                    @for (b of brands(); track b.id) {
+                      <option [ngValue]="b.id">{{ b.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="grammage_id">Gramaje</label>
+                  <select id="grammage_id" formControlName="grammage_id" class="form-select"
+                    [class.is-invalid]="verificationForm.get('grammage_id')?.touched && verificationForm.get('grammage_id')?.invalid">
+                    <option [ngValue]="null" disabled>Seleccione…</option>
+                    @for (g of grammages(); track g.id) {
+                      <option [ngValue]="g.id">{{ g.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="machine_id">Máquina</label>
+                  <select id="machine_id" formControlName="machine_id" class="form-select"
+                    [class.is-invalid]="verificationForm.get('machine_id')?.touched && verificationForm.get('machine_id')?.invalid">
+                    <option [ngValue]="null" disabled>Seleccione…</option>
+                    @for (m of machines(); track m.id) {
+                      <option [ngValue]="m.id">{{ m.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="lot_expires">Lote / vencimiento</label>
+                  <input id="lot_expires" formControlName="lot_expires" class="form-control"
+                    [class.is-invalid]="verificationForm.get('lot_expires')?.touched && verificationForm.get('lot_expires')?.invalid">
+                </div>
+              </div>
+              <div class="form-actions mt-4">
+                <button type="button" class="btn btn-cancel-la-nieve" (click)="cancelSampling()">
+                  <i class="bi bi-x-circle pe-2" aria-hidden="true"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" (click)="nextStep()">
+                  Siguiente <i class="bi bi-arrow-right ps-2" aria-hidden="true"></i>
+                </button>
               </div>
             </div>
-          </div>
-        </div>
+          }
 
-        <div class="form-actions mt-4 d-flex gap-2">
-          <button class="btn btn-secondary flex-grow-1" (click)="prevStep()" type="button">
-            <i class="bi bi-arrow-left pe-2"></i> Atrás
-          </button>
-          <button class="btn btn-primary flex-grow-1" (click)="nextStep()" type="button">
-            Siguiente <i class="bi bi-arrow-right ps-2"></i>
-          </button>
-        </div>
-      </div>
-
-      <div *ngIf="step==3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="mb-0">Registro de Pesos (98 muestras)</h4>
-          <span class="badge bg-info text-dark shadow-sm">Total ítems: {{items.length}}</span>
-        </div>
-
-        <div class="row g-2 sampling-grid" formArrayName="items">
-          <div *ngFor="let item of items.controls; let i=index" [formGroupName]="i" class="col-6 col-md-3 col-lg-2">
-            <div class="input-group custom-input-group"
-              [class.border-danger]="item.get('sample_weight_agm')?.touched && item.get('sample_weight_agm')?.invalid">
-              <span class="input-group-text justify-content-center"
-                [class.bg-danger-soft]="item.get('sample_weight_agm')?.touched && item.get('sample_weight_agm')?.invalid">#{{i+1}}</span>
-              <input formControlName="sample_weight_agm" type="number" class="form-control text-center"
-                placeholder="0.0"
-                [class.is-invalid]="item.get('sample_weight_agm')?.touched && item.get('sample_weight_agm')?.invalid">
+          @if (step === 2) {
+            <div>
+              <h3 class="section-title mb-3">Peso de las bolsas vacías ({{ packageWeightSlots }} muestras)</h3>
+              <div class="row g-2 sampling-grid" formArrayName="package_weights">
+                @for (w of packageWeights.controls; track $index) {
+                  <div class="col-12 col-md-6 col-lg-4">
+                    <div class="input-group custom-input-group" [class.border-danger]="w.touched && w.invalid">
+                      <span class="input-group-text justify-content-center"
+                        [class.bg-danger-soft]="w.touched && w.invalid">Bolsa #{{ $index + 1 }}</span>
+                      <input type="number" class="form-control" [formControlName]="$index" placeholder="0.0" inputmode="decimal"
+                        [class.is-invalid]="w.touched && w.invalid">
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="mt-4 border-top pt-3">
+                <p class="mb-2"><strong>Promedio de empaque calculado</strong></p>
+                <div class="row">
+                  <div class="col-12 col-md-4 col-lg-3">
+                    <div class="input-group custom-input-group readonly-group">
+                      <input formControlName="package_average" class="form-control text-center shadow-none" readonly
+                        aria-readonly="true">
+                      <span class="input-group-text justify-content-center">g</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-actions mt-4 d-flex gap-2">
+                <button type="button" class="btn btn-secondary flex-grow-1" (click)="prevStep()">
+                  <i class="bi bi-arrow-left pe-2" aria-hidden="true"></i> Atrás
+                </button>
+                <button type="button" class="btn btn-primary flex-grow-1" (click)="nextStep()">
+                  Siguiente <i class="bi bi-arrow-right ps-2" aria-hidden="true"></i>
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
+          }
 
-        <div class="form-actions mt-4 d-flex gap-2">
-          <button class="btn btn-secondary flex-grow-1" (click)="prevStep()" type="button">
-            <i class="bi bi-arrow-left pe-2"></i> Atrás
-          </button>
-          <button class="btn btn-success flex-grow-1" type="button" (click)="onSubmit()">
-            <i class="bi bi-check-circle pe-2"></i> Guardar (98 ítems)
-          </button>
-        </div>
+          @if (step === 3) {
+            <div>
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h3 class="section-title mb-0">Registro de pesos ({{ sampleItemCount }} muestras)</h3>
+                <span class="badge badge-brand-info shadow-sm">Total ítems: {{ items.length }}</span>
+              </div>
+              <div class="row g-2 sampling-grid" formArrayName="items">
+                @for (item of items.controls; track $index) {
+                  <div [formGroupName]="$index" class="col-6 col-md-3 col-lg-2">
+                    <div class="input-group custom-input-group"
+                      [class.border-danger]="item.get('sample_weight_agm')?.touched && item.get('sample_weight_agm')?.invalid">
+                      <span class="input-group-text justify-content-center"
+                        [class.bg-danger-soft]="item.get('sample_weight_agm')?.touched && item.get('sample_weight_agm')?.invalid">#{{ $index + 1 }}</span>
+                      <input formControlName="sample_weight_agm" type="number" class="form-control text-center"
+                        placeholder="0.0" inputmode="decimal"
+                        [class.is-invalid]="item.get('sample_weight_agm')?.touched && item.get('sample_weight_agm')?.invalid">
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="form-actions mt-4 d-flex gap-2">
+                <button type="button" class="btn btn-secondary flex-grow-1" (click)="prevStep()">
+                  <i class="bi bi-arrow-left pe-2" aria-hidden="true"></i> Atrás
+                </button>
+                <button type="button" class="btn btn-success flex-grow-1" (click)="onSubmit()">
+                  <i class="bi bi-check-circle pe-2" aria-hidden="true"></i> Guardar ({{ sampleItemCount }} ítems)
+                </button>
+              </div>
+            </div>
+          }
+        </form>
       </div>
-    </form>
+    }
   </div>
 </div>
 
-<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content" *ngIf="selectedDetail">
-      <div class="modal-header border-bottom-0">
-        <h5 class="modal-title w-100 text-center fw-bold text-uppercase">
-          VERIFICACIÓN DE CUMPLIMIENTO DE CONTENIDO NETO
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <div class="modal-body p-2 p-md-3">
-        <div class="report-header-container text-uppercase">
-          <div class="row m-0 border-bottom-dark">
-            <div class="col-3 border-end border-dark py-2 fw-bold bg-light small">FECHA DE</div>
-            <div class="col-3 border-end border-dark py-2 small">{{ selectedDetail.created_at | date:'dd/MM/yyyy' }}
-            </div>
-            <div class="col-3 border-end border-dark py-2 fw-bold bg-light small">MUESTREADO</div>
-            <div class="col-3 py-2 small">{{ selectedDetail.sampled }}</div>
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true" aria-labelledby="detailModalTitle">
+  <div class="modal-dialog modal-dialog-scrollable modal-detail">
+    @if (selectedDetail(); as detail) {
+      <div class="modal-content modal-content--compact">
+        <div class="modal-header modal-header--compact py-2 px-3 border-bottom">
+          <h2 id="detailModalTitle" class="modal-title h6 mb-0 flex-grow-1 pe-2">
+            Contenido neto — detalle
+          </h2>
+          <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body modal-body--compact p-2 p-sm-3">
+          <div class="detail-meta-grid">
+            <div><span class="detail-meta-grid__k">Fecha</span> {{ detail.created_at | date:'dd/MM/yy' }}</div>
+            <div><span class="detail-meta-grid__k">Muestreo</span> {{ detail.sampled }}</div>
+            <div class="detail-meta-grid__span2"><span class="detail-meta-grid__k">Producto</span>
+              {{ detail.product?.name }} {{ detail.brand?.name }} {{ detail.grammage?.alias }}</div>
+            <div><span class="detail-meta-grid__k">Máquina</span> {{ detail.machine?.name }}</div>
+            <div><span class="detail-meta-grid__k">Lote / vence</span> {{ detail.lot_expires }}</div>
           </div>
-          <div class="row m-0 border-bottom-dark">
-            <div class="col-3 border-end border-dark py-2 fw-bold bg-light small">PRODUCTO</div>
-            <div class="col-9 py-2 small">
-              {{ selectedDetail.product?.name }} {{ selectedDetail.brand?.name }} {{ selectedDetail.grammage?.alias }}
-            </div>
-          </div>
-          <div class="row m-0">
-            <div class="col-3 border-end border-dark py-2 fw-bold bg-light small">MAQUINA:</div>
-            <div class="col-3 border-end border-dark py-2 small">{{ selectedDetail.machine?.name }}</div>
-            <div class="col-3 border-end border-dark py-2 fw-bold bg-light small">LOTE / VENCE:</div>
-            <div class="col-3 py-2 small">{{ selectedDetail.lot_expires }}</div>
+          <div class="detail-table-scroll mt-2">
+            <table class="table table-bordered table-sm text-center align-middle mb-0 detail-items-table">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col" title="Peso muestra AGM">AGM</th>
+                  <th scope="col" title="Peso promedio empaque">ATM</th>
+                  <th scope="col" title="Cantidad real">Qi</th>
+                  <th scope="col">T1</th>
+                  <th scope="col">T2</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of detailItems(); track $index) {
+                  <tr>
+                    <td class="fw-semibold text-secondary">{{ $index + 1 }}</td>
+                    <td>{{ row.sample_weight_agm }}</td>
+                    <td>{{ row.average_weight }}</td>
+                    <td class="fw-semibold">{{ row.actual_quantity }}</td>
+                    <td class="detail-cell-tight" [ngClass]="cssClassForResult(row.status, 'T1')">
+                      {{ labelForT1(row.status) }}</td>
+                    <td class="detail-cell-tight" [ngClass]="cssClassForResult(row.status, 'T2')">
+                      {{ labelForT2(row.status) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </div>
-
-        <div class="table-responsive mt-3">
-          <table class="table table-bordered table-sm text-center align-middle custom-table">
-            <thead class="bg-light">
-              <tr class="small fw-bold">
-                <th style="width: 5%;">ITEM</th>
-                <th style="width: 20%;">PESO DE LA MUESTRA AGM<br>(masa real del preempacado)</th>
-                <th style="width: 15%;">ATM<br>PESO PROMEDIO EMPAQUE</th>
-                <th style="width: 15%;">Qi<br>(Cantidad real)</th>
-                <th style="width: 15%;">ERROR T1</th>
-                <th style="width: 15%;">ERROR T2</th>
-              </tr>
-            </thead>
-            <tbody class="small">
-              <tr *ngFor="let item of detailItems; let i = index">
-                <td class="fw-bold bg-light">{{ i + 1 }}</td>
-                <td>{{ item.sample_weight_agm }}g</td>
-                <td>{{ item.average_weight }}g</td>
-                <td class="fw-bold">{{ item.actual_quantity }}g</td>
-
-                <td [ngClass]="claseResultado(item.status, 'T1')">
-                  {{ obtenerResultadoT1(item.status) }}
-                </td>
-
-                <td [ngClass]="claseResultado(item.status, 'T2')">
-                  {{ obtenerResultadoT2(item.status) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="modal-footer modal-footer--compact py-2 px-3 border-top">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         </div>
       </div>
-
-      <div class="modal-footer border-top-0">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar Detalle</button>
-      </div>
-    </div>
+    }
   </div>
 </div>
 
-<div class="modal fade" id="responseModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content shadow border-0">
-      <div class="modal-header" [ngClass]="modalType === 'success' ? 'bg-success' : 'bg-danger text-white'">
-        <h5 class="modal-title">
-          {{ modalType === 'success' ? 'Éxito' : 'Error en Validación' }}
-        </h5>
-        <button type="button" class="btn-close" [class.btn-close-white]="modalType === 'error'"
-          data-bs-dismiss="modal"></button>
+<div class="modal fade" id="responseModal" tabindex="-1" aria-labelledby="responseModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content modal-content--compact shadow-sm border">
+      <div class="modal-header modal-header--compact py-2 px-3 align-items-center"
+        [ngClass]="modalType() === 'success' ? 'modal-header--feedback-ok' : 'modal-header--feedback-err'">
+        <i class="bi me-2 flex-shrink-0" aria-hidden="true"
+          [ngClass]="modalType() === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'"></i>
+        <h2 id="responseModalTitle" class="modal-title h6 mb-0">
+          {{ modalType() === 'success' ? 'Éxito' : 'Error' }}
+        </h2>
+        <button type="button" class="btn-close btn-close-sm ms-auto" [class.btn-close-white]="true"
+          data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
-      <div class="modal-body text-center p-4">
-        <i [ngClass]="modalType === 'success' ? 'bi bi-check-circle text-success' : 'bi bi-exclamation-triangle text-danger'"
-          style="font-size: 3rem;"></i>
-        <p class="mt-3 fw-bold" style="white-space: pre-line;">
-          {{ modalMessage }}
-        </p>
+      <div class="modal-body modal-body--compact py-2 px-3">
+        <p class="mb-0 small response-modal__message text-start">{{ modalMessage() }}</p>
       </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+      <div class="modal-footer modal-footer--compact py-2 px-3 border-top-0 pt-0">
+        <button type="button" class="btn btn-sm btn-light w-100 border" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>

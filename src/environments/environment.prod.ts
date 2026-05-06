@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:8000', // Cambia esto si tu backend usa otra URL
+  apiUrl: 'http://75.101.169.227:8000', // Cambia esto si tu backend usa otra URL
 };
