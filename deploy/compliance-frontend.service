@@ -1,0 +1,17 @@
+[Unit]
+Description=Frontend Compliance Verification (serve estático)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/compliance_verification-Frontend/dist/compliance_verification
+ExecStart=/usr/bin/npx --yes serve -s --no-clipboard --listen tcp://0.0.0.0:4200 .
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

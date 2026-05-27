@@ -6,7 +6,7 @@ export const routes: Routes = [
   {
     path: 'compliance',
     component: ComplianceVerificationComponent,
-    title: 'Verificación de cumplimiento',
+    title: 'Verificación de cumplimiento de contenido neto',
   },
   { path: '**', redirectTo: 'compliance' },
 ];

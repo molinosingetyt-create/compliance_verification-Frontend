@@ -21,6 +21,8 @@ describe('App', () => {
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.app-shell')).toBeTruthy();
-    expect(compiled.querySelector('.app-header__title')?.textContent).toContain('Compliance Verification');
+    expect(compiled.querySelector('.app-header__title')?.textContent).toContain(
+      'Verificación de cumplimiento de contenido neto'
+    );
   });
 });

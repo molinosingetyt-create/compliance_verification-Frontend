@@ -31,37 +31,103 @@
         <div class="verification-cards-wrap">
           @for (v of verifications(); track trackByVerificationId($index, v)) {
             <article class="verification-card">
-              <div class="verification-card__head">
-                <time class="verification-card__date" [attr.datetime]="v.created_at">{{ v.created_at | date:'short' }}</time>
-                <span class="badge-status"
-                  [class.bg-success-soft]="v.status === 1"
-                  [class.bg-danger-soft]="v.status === 2">
-                  {{ v.status === 1 ? 'CUMPLE' : 'NO CUMPLE' }}
-                </span>
-                <button type="button" class="btn btn-action-view btn-action-view--compact" (click)="viewDetail(v.id)"
-                  [attr.aria-label]="'Ver detalle de verificación ' + v.id">
-                  <i class="bi bi-eye-fill" aria-hidden="true"></i>
-                </button>
+              <header class="verification-card__header">
+                <div class="verification-card__identity">
+                  <time class="verification-card__date" [attr.datetime]="v.created_at">{{ v.created_at | date:'short' }}</time>
+                  <div class="verification-card__meta-row"
+                    [attr.title]="(v.product_name || '') + ' · ' + (v.brand_name || '') + ' · ' + (v.grammage_name || '')">
+                    <span class="verification-card__meta-k">Producto</span>
+                    <span class="verification-card__meta-v">
+                      {{ v.product_name }} · {{ v.brand_name }}@if (v.grammage_name) { · {{ v.grammage_name }}<span class="metric-unit metric-unit--inline"> g</span> }
+                    </span>
+                  </div>
+                  <div class="verification-card__meta-row">
+                    <span class="verification-card__meta-k">Máquina</span>
+                    <span class="verification-card__meta-v">{{ v.machine_name }}</span>
+                  </div>
+                </div>
+                <div class="verification-card__status" aria-label="Estado y detalle">
+                  <span class="badge-status"
+                    [class.bg-success-soft]="v.status === 1"
+                    [class.bg-danger-soft]="v.status === 2">
+                    {{ v.status === 1 ? 'CUMPLE' : 'NO CUMPLE' }}
+                  </span>
+                  <button type="button" class="btn btn-action-view btn-action-view--compact" (click)="viewDetail(v.id)"
+                    [attr.aria-label]="'Ver detalle de verificación ' + v.id">
+                    <i class="bi bi-eye-fill" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </header>
+              <div class="verification-card__panels">
+                <section class="verification-card__panel" aria-label="Métricas de peso y tolerancia">
+                  <table class="verification-card__table">
+                    <tbody>
+                      <tr>
+                        <th scope="row">
+                          <span class="metric-label metric-label--short" title="Tolerancia (g)">Tol.</span>
+                          <span class="metric-label metric-label--long">Tolerancia<span class="metric-unit">(g)</span></span>
+                        </th>
+                        <td>{{ v.tolerance | decimalMax }}<span class="metric-unit metric-unit--value"> g</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">
+                          <span class="metric-label metric-label--short" title="x̄ pesos con empaque (g)">C.N. c/emp.</span>
+                          <span class="metric-label metric-label--long">x̄ pesos con empaque<span class="metric-unit">(g)</span></span>
+                        </th>
+                        <td>{{ v.avg_gross_weight | decimalMax }}<span class="metric-unit metric-unit--value"> g</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">
+                          <span class="metric-label metric-label--short" title="Desviación">Desv.</span>
+                          <span class="metric-label metric-label--long">Desviación</span>
+                        </th>
+                        <td>{{ v.standard_deviation | decimalMax }}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">
+                          <span class="metric-label metric-label--short" title="# Unidades &lt; Cont. Nominal">&lt; nominal</span>
+                          <span class="metric-label metric-label--long"># Unidades &lt; Cont. Nominal</span>
+                        </th>
+                        <td>{{ v.under_nominal_count | decimalMax }}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">
+                          <span class="metric-label metric-label--short" title="% Unidades &lt; Cont. Nominal">% &lt; nom.</span>
+                          <span class="metric-label metric-label--long">% Unidades &lt; Cont. Nominal</span>
+                        </th>
+                        <td>{{ v.percentage_under_nominal | decimalMax }}%</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </section>
+                <section class="verification-card__panel" aria-label="Métricas de contenido neto y errores">
+                  <table class="verification-card__table">
+                    <tbody>
+                      <tr>
+                        <th scope="row">
+                          <span class="metric-label metric-label--short" title="x̄ contenido neto (g)">C.N.</span>
+                          <span class="metric-label metric-label--long">x̄ contenido neto<span class="metric-unit">(g)</span></span>
+                        </th>
+                        <td>{{ v.avg_net_weight | decimalMax }}<span class="metric-unit metric-unit--value"> g</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">
+                          <span class="metric-label metric-label--short" title="# Unidades con error T1">Err. T1</span>
+                          <span class="metric-label metric-label--long"># Unidades con error T1</span>
+                        </th>
+                        <td>{{ v.t1_errors_count | decimalMax }}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">
+                          <span class="metric-label metric-label--short" title="# Unidades con error T2">Err. T2</span>
+                          <span class="metric-label metric-label--long"># Unidades con error T2</span>
+                        </th>
+                        <td>{{ v.t2_errors_count | decimalMax }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </section>
               </div>
-              <p class="verification-card__line"
-                [attr.title]="(v.product_name || '') + ' · ' + (v.brand_name || '') + ' · ' + (v.grammage_name || '')">
-                <span class="verification-card__label">Producto</span>
-                {{ v.product_name }} · {{ v.brand_name }} · {{ v.grammage_name }}
-              </p>
-              <p class="verification-card__line verification-card__line--muted">
-                <span class="verification-card__label">Máquina</span>
-                {{ v.machine_name }}
-              </p>
-              <dl class="verification-card__metrics" aria-label="Métricas de la verificación">
-                <div><dt>Tol.</dt><dd>{{ v.tolerance }}</dd></div>
-                <div><dt>P. c/emp.</dt><dd>{{ v.avg_gross_weight }}</dd></div>
-                <div><dt>P. neto</dt><dd>{{ v.avg_net_weight }}</dd></div>
-                <div><dt>Desv.</dt><dd>{{ v.standard_deviation }}</dd></div>
-                <div><dt>Err. T1</dt><dd>{{ v.t1_errors_count }}</dd></div>
-                <div><dt>Err. T2</dt><dd>{{ v.t2_errors_count }}</dd></div>
-                <div><dt>&lt; nominal</dt><dd>{{ v.under_nominal_count }}</dd></div>
-                <div><dt>% &lt; nom.</dt><dd>{{ v.percentage_under_nominal }}%</dd></div>
-              </dl>
             </article>
           }
           @if (!listLoading() && verifications().length === 0) {
@@ -242,7 +308,7 @@
         <div class="modal-body modal-body--compact p-2 p-sm-3">
           <div class="detail-meta-grid">
             <div><span class="detail-meta-grid__k">Fecha</span> {{ detail.created_at | date:'dd/MM/yy' }}</div>
-            <div><span class="detail-meta-grid__k">Muestreo</span> {{ detail.sampled }}</div>
+            <div><span class="detail-meta-grid__k">Muestreo</span> {{ detail.sampled | decimalMax }}</div>
             <div class="detail-meta-grid__span2"><span class="detail-meta-grid__k">Producto</span>
               {{ detail.product?.name }} {{ detail.brand?.name }} {{ detail.grammage?.alias }}</div>
             <div><span class="detail-meta-grid__k">Máquina</span> {{ detail.machine?.name }}</div>
@@ -264,9 +330,9 @@
                 @for (row of detailItems(); track $index) {
                   <tr>
                     <td class="fw-semibold text-secondary">{{ $index + 1 }}</td>
-                    <td>{{ row.sample_weight_agm }}</td>
-                    <td>{{ row.average_weight }}</td>
-                    <td class="fw-semibold">{{ row.actual_quantity }}</td>
+                    <td>{{ row.sample_weight_agm | decimalMax }}</td>
+                    <td>{{ row.average_weight | decimalMax }}</td>
+                    <td class="fw-semibold">{{ row.actual_quantity | decimalMax }}</td>
                     <td class="detail-cell-tight" [ngClass]="cssClassForResult(row.status, 'T1')">
                       {{ labelForT1(row.status) }}</td>
                     <td class="detail-cell-tight" [ngClass]="cssClassForResult(row.status, 'T2')">

@@ -17,6 +17,7 @@ import {
 import { ComplianceVerificationService } from '../services/compliance-verification.service';
 import { CatalogService } from '../services/catalog.service';
 import { showBootstrapModal } from '../core/bootstrap-modal';
+import { DecimalMaxPipe } from '../core/decimal-max.pipe';
 import type { CatalogEntity, Grammage, PackagingMachine } from '../models/catalog.model';
 import type {
   ComplianceVerificationRow,
@@ -31,7 +32,7 @@ const SAMPLE_ITEM_COUNT = 98;
 @Component({
   selector: 'app-compliance-verification',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DecimalMaxPipe],
   templateUrl: './compliance-verification.component.html',
   styleUrls: ['./compliance-verification.component.scss'],
 })

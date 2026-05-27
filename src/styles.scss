@@ -30,15 +30,17 @@
   --brand-la-nieve-rojo-hover: #b80818;
   --brand-la-insuperable-amarillo: var(--brand-amarillo-insuperable);
 
-  /* Estados (sin verde en manual: cumple → azul / no cumple → rojo corporativo) */
-  --brand-status-ok-bg: #e8f1fb;
-  --brand-status-ok-text: var(--brand-navy);
-  --brand-status-ok-border: rgba(0, 102, 204, 0.28);
+  /* Estados: cumple → verde / no cumple → rojo corporativo */
+  --brand-verde: #198754;
+  --brand-verde-claro: #e8f5e9;
+  --brand-status-ok-bg: var(--brand-verde-claro);
+  --brand-status-ok-text: #0f5132;
+  --brand-status-ok-border: rgba(25, 135, 84, 0.35);
   --brand-status-no-bg: var(--brand-beige);
   --brand-status-no-text: var(--brand-rojo-oscuro);
   --brand-status-no-border: rgba(193, 39, 45, 0.28);
 
-  --brand-strong-ok-text: var(--brand-azul);
+  --brand-strong-ok-text: var(--brand-verde);
 }
 
 body {
