@@ -43,12 +43,24 @@
   --brand-strong-ok-text: var(--brand-verde);
 }
 
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   font-family: var(--app-font-secondary);
   color: var(--app-text);
   background: var(--app-bg);
   -webkit-font-smoothing: antialiased;
+}
+
+app-root {
+  display: block;
+  height: 100%;
+  overflow: hidden;
 }
 
 

@@ -1,0 +1,137 @@
+<div class="main-layout" [class.main-layout--nav-open]="mobileNavOpen()">
+  @if (mobileNavOpen()) {
+    <button
+      type="button"
+      class="main-layout__backdrop"
+      aria-label="Cerrar menú"
+      (click)="closeMobileNav()"></button>
+  }
+
+  <aside class="main-layout__sidebar" aria-label="Menú de la aplicación">
+    <div class="main-layout__sidebar-brand">
+      <span class="main-layout__sidebar-title">Contenido neto</span>
+      <span class="main-layout__sidebar-sub">Cumplimiento</span>
+    </div>
+
+    <nav id="app-sidebar-nav" class="main-layout__nav">
+      @if (auth.hasPermission('sampling:view')) {
+        <a
+          routerLink="/dashboard"
+          routerLinkActive="main-layout__nav-link--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="main-layout__nav-link"
+          (click)="onSidebarLinkClick()">
+          <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
+          Dashboard
+        </a>
+        <a
+          routerLink="/compliance"
+          routerLinkActive="main-layout__nav-link--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="main-layout__nav-link"
+          (click)="onSidebarLinkClick()">
+          <i class="bi bi-clipboard2-check" aria-hidden="true"></i>
+          Verificaciones
+        </a>
+      }
+      @if (auth.canAccessConfiguration()) {
+        <div class="main-layout__nav-group">
+          <span class="main-layout__nav-group-label">
+            <i class="bi bi-sliders" aria-hidden="true"></i>
+            Configuración
+          </span>
+          <div class="main-layout__nav-sub">
+            @if (auth.canManageCatalog()) {
+              <a
+                routerLink="/configuracion/productos"
+                routerLinkActive="main-layout__nav-link--active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="main-layout__nav-link main-layout__nav-link--sub"
+                (click)="onSidebarLinkClick()">
+                <i class="bi bi-box-seam" aria-hidden="true"></i>
+                Productos
+              </a>
+              <a
+                routerLink="/configuracion/marcas"
+                routerLinkActive="main-layout__nav-link--active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="main-layout__nav-link main-layout__nav-link--sub"
+                (click)="onSidebarLinkClick()">
+                <i class="bi bi-tag" aria-hidden="true"></i>
+                Marcas
+              </a>
+              <a
+                routerLink="/configuracion/gramajes"
+                routerLinkActive="main-layout__nav-link--active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="main-layout__nav-link main-layout__nav-link--sub"
+                (click)="onSidebarLinkClick()">
+                <i class="bi bi-rulers" aria-hidden="true"></i>
+                Gramajes
+              </a>
+            }
+            @if (auth.canManageUsers()) {
+              <a
+                routerLink="/configuracion/usuarios"
+                routerLinkActive="main-layout__nav-link--active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="main-layout__nav-link main-layout__nav-link--sub"
+                (click)="onSidebarLinkClick()">
+                <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
+                Usuarios
+              </a>
+              <a
+                routerLink="/configuracion/perfiles"
+                routerLinkActive="main-layout__nav-link--active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="main-layout__nav-link main-layout__nav-link--sub"
+                (click)="onSidebarLinkClick()">
+                <i class="bi bi-shield-lock" aria-hidden="true"></i>
+                Perfiles
+              </a>
+              <a
+                routerLink="/configuracion/permisos"
+                routerLinkActive="main-layout__nav-link--active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="main-layout__nav-link main-layout__nav-link--sub"
+                (click)="onSidebarLinkClick()">
+                <i class="bi bi-key" aria-hidden="true"></i>
+                Permisos
+              </a>
+            }
+          </div>
+        </div>
+      }
+    </nav>
+  </aside>
+
+  <div class="main-layout__content">
+    <header class="main-layout__toolbar">
+      <button
+        type="button"
+        class="main-layout__menu-btn d-md-none"
+        (click)="toggleMobileNav()"
+        [attr.aria-expanded]="mobileNavOpen()"
+        aria-controls="app-sidebar-nav"
+        aria-label="Abrir o cerrar menú">
+        <i class="bi bi-list" aria-hidden="true"></i>
+      </button>
+      <div class="main-layout__toolbar-spacer d-none d-md-block"></div>
+      <div class="main-layout__toolbar-actions">
+        <div class="main-layout__toolbar-user small text-secondary text-truncate">
+          @if (auth.user(); as u) {
+            <span class="fw-semibold text-body" [attr.title]="u.username">{{ auth.displayName() }}</span>
+            @if (u.role?.name) {
+              <span class="text-muted ms-1">· {{ u.role?.name }}</span>
+            }
+          }
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="logout()">Salir</button>
+      </div>
+    </header>
+
+    <div class="main-layout__outlet">
+      <router-outlet />
+    </div>
+  </div>
+</div>

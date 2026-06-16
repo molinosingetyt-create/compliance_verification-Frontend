@@ -1,0 +1,194 @@
+<div class="config-page py-4">
+  <div class="container">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Perfiles</h1>
+        <p class="text-muted small mb-0">Gestione perfiles y asigne cada permiso a cada perfil</p>
+      </div>
+      <button type="button" class="btn btn-success btn-sm" (click)="startCreate()">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
+        Nuevo perfil
+      </button>
+    </div>
+
+    @if (message(); as m) {
+      <div class="alert alert-success py-2">{{ m }}</div>
+    }
+    @if (error(); as e) {
+      <div class="alert alert-danger py-2">{{ e }}</div>
+    }
+
+    @if (viewingItem(); as v) {
+      <div class="config-view-panel mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h2 class="h6 mb-0">Detalle del perfil</h2>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="closeView()"></button>
+        </div>
+        <dl>
+          <dt>ID</dt>
+          <dd>{{ v.id }}</dd>
+          <dt>Nombre</dt>
+          <dd>{{ v.name }}</dd>
+          <dt>Permisos asignados</dt>
+          <dd>
+            @if (v.permissions.length) {
+              <ul class="mb-0 ps-3 small">
+                @for (code of v.permissions; track code) {
+                  <li><code>{{ code }}</code></li>
+                }
+              </ul>
+            } @else {
+              <span class="text-muted">Sin permisos asignados</span>
+            }
+          </dd>
+        </dl>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="startEdit(v)">Editar nombre</button>
+          <button type="button" class="btn btn-primary btn-sm" (click)="selectRoleForAssign(v)">Asignar permisos</button>
+        </div>
+      </div>
+    }
+
+    @if (showForm()) {
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white fw-semibold">
+          {{ editingId() == null ? 'Nuevo perfil' : 'Editar perfil' }}
+        </div>
+        <div class="card-body">
+          <form [formGroup]="form" (ngSubmit)="submit()" class="d-flex flex-wrap align-items-end gap-3">
+            <div>
+              <label class="form-label small">Nombre del perfil</label>
+              <input class="form-control form-control-sm" formControlName="name" style="min-width: 14rem" />
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary btn-sm" [disabled]="saving()">Guardar</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelForm()">Cancelar</button>
+            </div>
+          </form>
+          <p class="text-muted small mb-0 mt-2">
+            Los permisos se asignan en el panel «Asignar permisos por perfil» después de crear el perfil.
+          </p>
+        </div>
+      </div>
+    }
+
+    @if (loading()) {
+      <p class="text-muted">Cargando…</p>
+    } @else {
+      <div class="row g-4">
+        <div class="col-12 col-lg-5">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white fw-semibold">Perfiles</div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0 align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th scope="col">Nombre</th>
+                      <th scope="col">Permisos</th>
+                      <th scope="col" class="text-end" style="width: 8.5rem">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (r of roles(); track r.id) {
+                      <tr
+                        [class.table-active]="assigningRoleId() === r.id"
+                        role="button"
+                        (click)="selectRoleForAssign(r)">
+                        <td class="fw-semibold">{{ r.name }}</td>
+                        <td class="small text-muted">{{ r.permissions.length }}</td>
+                        <td (click)="$event.stopPropagation()">
+                          <div class="config-crud-actions">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" title="Ver" (click)="viewItem(r)">
+                              <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" title="Editar nombre" (click)="startEdit(r)">
+                              <i class="bi bi-pencil" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" title="Eliminar" (click)="deleteItem(r)">
+                              <i class="bi bi-trash" aria-hidden="true"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td colspan="3" class="text-muted small p-3">Sin perfiles. Cree uno con «Nuevo perfil».</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white fw-semibold">Asignar permisos por perfil</div>
+            <div class="card-body">
+              <label class="form-label small" for="assignRoleSelect">Perfil</label>
+              <select
+                id="assignRoleSelect"
+                class="form-select form-select-sm mb-3"
+                (change)="onAssignRoleSelect($event)">
+                <option value="" disabled [selected]="assigningRoleId() == null">Seleccione un perfil…</option>
+                @for (r of roles(); track r.id) {
+                  <option [value]="r.id" [selected]="assigningRoleId() === r.id">{{ r.name }}</option>
+                }
+              </select>
+
+              @if (assigningRoleId() != null) {
+                <p class="small text-muted mb-2">
+                  Marque los permisos para <strong>{{ assigningRoleName() }}</strong> y pulse Guardar.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="selectAllAssignPermissions()">
+                    Marcar todos
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearAllAssignPermissions()">
+                    Quitar todos
+                  </button>
+                </div>
+                <div class="vstack gap-2 mb-3 config-perm-checks">
+                  @for (p of permissions(); track p.id) {
+                    <label class="d-flex align-items-start gap-2 small mb-0 config-perm-row">
+                      <input
+                        type="checkbox"
+                        class="form-check-input mt-1"
+                        [checked]="isAssignPermChecked(p.id)"
+                        (change)="toggleAssignPermission(p.id)" />
+                      <span>
+                        <strong class="d-block"><code>{{ p.code }}</code></strong>
+                        <span class="text-muted">{{ p.description ?? 'Sin descripción' }}</span>
+                      </span>
+                    </label>
+                  } @empty {
+                    <p class="text-muted small mb-0">
+                      No hay permisos en el catálogo. Créelos en <strong>Configuración → Permisos</strong>.
+                    </p>
+                  }
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="saveAssignedPermissions()"
+                  [disabled]="savingPermissions() || permissions().length === 0">
+                  @if (savingPermissions()) {
+                    Guardando…
+                  } @else {
+                    Guardar permisos del perfil
+                  }
+                </button>
+              } @else {
+                <p class="text-muted small mb-0">
+                  Seleccione un perfil en la lista o en el desplegable para asignar permisos uno a uno.
+                </p>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

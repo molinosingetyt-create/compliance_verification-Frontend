@@ -1,0 +1,138 @@
+:host {
+  display: block;
+}
+
+.dashboard-page {
+  .text-brand-azul {
+    color: var(--brand-azul, #0066cc);
+  }
+}
+
+.card-header .text-brand-azul {
+  color: var(--brand-azul, #0066cc);
+}
+
+.dashboard-title {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+  color: var(--brand-navy, #103847);
+}
+
+.dashboard-subtitle {
+  font-size: 0.9rem;
+}
+
+.dashboard-state {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem 0;
+  color: var(--brand-navy, #103847);
+}
+
+.dashboard-kpi {
+  background: var(--app-surface, #fff);
+  border: 1px solid rgba(16, 56, 71, 0.1);
+  border-radius: var(--app-radius, 12px);
+  padding: 1rem 1.1rem;
+  height: 100%;
+  box-shadow: 0 1px 3px rgba(16, 56, 71, 0.06);
+
+  &--ok {
+    border-color: var(--brand-status-ok-border);
+    background: var(--brand-status-ok-bg);
+  }
+}
+
+.dashboard-kpi__label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(16, 56, 71, 0.65);
+  margin-bottom: 0.35rem;
+}
+
+.dashboard-kpi__value {
+  display: block;
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--brand-navy, #103847);
+}
+
+.dashboard-kpi__hint {
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(16, 56, 71, 0.55);
+  margin-top: 0.25rem;
+}
+
+.dashboard-tabs .nav-link {
+  color: var(--brand-navy, #103847);
+  font-weight: 600;
+  border: none;
+  border-bottom: 2px solid transparent;
+
+  &.active {
+    color: var(--brand-azul, #0066cc);
+    border-bottom-color: var(--brand-azul, #0066cc);
+    background: transparent;
+  }
+}
+
+.dashboard-table th {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.dashboard-bars__item + .dashboard-bars__item {
+  margin-top: 0.85rem;
+}
+
+.dashboard-bars__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.dashboard-bars__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 75%;
+  color: var(--brand-navy, #103847);
+  font-weight: 600;
+}
+
+.dashboard-bars__pct {
+  font-weight: 700;
+  color: var(--brand-navy, #103847);
+}
+
+.dashboard-bar {
+  height: 0.55rem;
+  background: rgba(16, 56, 71, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.dashboard-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.35s ease;
+
+  &--ok {
+    background: var(--brand-verde, #198754);
+  }
+
+  &--warn {
+    background: var(--brand-naranja, #d6661b);
+  }
+
+  &--bad {
+    background: var(--brand-rojo-oscuro, #c1272d);
+  }
+}

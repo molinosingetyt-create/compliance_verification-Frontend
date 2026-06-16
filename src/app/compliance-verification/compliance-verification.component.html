@@ -1,6 +1,5 @@
 <div class="compliance-page">
   <div class="container py-4 compliance-container">
-
     @if (listLoading() && !showForm) {
         <div class="compliance-state compliance-state--loading" role="status">
         <div class="spinner-border text-brand-azul" aria-hidden="true"></div>
@@ -22,10 +21,12 @@
             <h2 class="title-page">Verificaciones de cumplimiento</h2>
             <p class="title-page__hint">Histórico de muestreos y métricas de contenido neto</p>
           </div>
-          <button type="button" class="btn btn-success sampling-btn" (click)="startSampling()">
-            <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
-            Realizar muestreo
-          </button>
+          @if (auth.canCreateSampling()) {
+            <button type="button" class="btn btn-success sampling-btn" (click)="startSampling()">
+              <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
+              Realizar muestreo
+            </button>
+          }
         </div>
 
         <div class="verification-cards-wrap">
@@ -45,6 +46,16 @@
                     <span class="verification-card__meta-k">Máquina</span>
                     <span class="verification-card__meta-v">{{ v.machine_name }}</span>
                   </div>
+                  @if (v.market_destination) {
+                    <div class="verification-card__meta-row">
+                      <span class="verification-card__meta-k">Destino comercial</span>
+                      <span class="verification-card__meta-v">{{ marketDestinationLabel(v.market_destination) }}</span>
+                    </div>
+                  }
+                  <div class="verification-card__meta-row">
+                    <span class="verification-card__meta-k">Muestreador</span>
+                    <span class="verification-card__meta-v">{{ v.sampled }}</span>
+                  </div>
                 </div>
                 <div class="verification-card__status" aria-label="Estado y detalle">
                   <span class="badge-status"
@@ -55,6 +66,10 @@
                   <button type="button" class="btn btn-action-view btn-action-view--compact" (click)="viewDetail(v.id)"
                     [attr.aria-label]="'Ver detalle de verificación ' + v.id">
                     <i class="bi bi-eye-fill" aria-hidden="true"></i>
+                  </button>
+                  <button type="button" class="btn btn-action-view btn-action-view--compact" (click)="viewPackageWeights(v.id)"
+                    [attr.aria-label]="'Ver pesos de empaque de verificación ' + v.id">
+                    <i class="bi bi-box-seam" aria-hidden="true"></i>
                   </button>
                 </div>
               </header>
@@ -160,9 +175,21 @@
               <h3 class="section-title mb-3">Datos de la muestra</h3>
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label" for="sampled">Persona que realiza el muestreo</label>
-                  <input id="sampled" formControlName="sampled" class="form-control" autocomplete="name"
-                    [class.is-invalid]="verificationForm.get('sampled')?.touched && verificationForm.get('sampled')?.invalid">
+                  <label class="form-label">Persona que realiza el muestreo</label>
+                  <p class="form-control-plaintext border rounded px-3 py-2 mb-0 bg-light">
+                    {{ auth.displayName() || '—' }}
+                  </p>
+                  <p class="form-text small text-muted mb-0">Se registra automáticamente con su usuario.</p>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="market_destination">Destino comercial</label>
+                  <select id="market_destination" formControlName="market_destination" class="form-select"
+                    [class.is-invalid]="verificationForm.get('market_destination')?.touched && verificationForm.get('market_destination')?.invalid">
+                    <option [ngValue]="null" disabled>Seleccione…</option>
+                    @for (opt of marketDestinationOptions; track opt.value) {
+                      <option [ngValue]="opt.value">{{ opt.label }}</option>
+                    }
+                  </select>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="product_id">Producto</label>
@@ -303,12 +330,20 @@
           <h2 id="detailModalTitle" class="modal-title h6 mb-0 flex-grow-1 pe-2">
             Contenido neto — detalle
           </h2>
+          @if (detail.status != null) {
+            <span class="badge-status me-2" [ngClass]="detailVerdictClass(detail.status)">
+              {{ detailVerdictLabel(detail.status) }}
+            </span>
+          }
           <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body modal-body--compact p-2 p-sm-3">
           <div class="detail-meta-grid">
             <div><span class="detail-meta-grid__k">Fecha</span> {{ detail.created_at | date:'dd/MM/yy' }}</div>
-            <div><span class="detail-meta-grid__k">Muestreo</span> {{ detail.sampled | decimalMax }}</div>
+            <div><span class="detail-meta-grid__k">Muestreador</span> {{ detail.sampled | decimalMax }}</div>
+            @if (detail.market_destination) {
+              <div><span class="detail-meta-grid__k">Destino comercial</span> {{ marketDestinationLabel(detail.market_destination) }}</div>
+            }
             <div class="detail-meta-grid__span2"><span class="detail-meta-grid__k">Producto</span>
               {{ detail.product?.name }} {{ detail.brand?.name }} {{ detail.grammage?.alias }}</div>
             <div><span class="detail-meta-grid__k">Máquina</span> {{ detail.machine?.name }}</div>
@@ -318,25 +353,137 @@
             <table class="table table-bordered table-sm text-center align-middle mb-0 detail-items-table">
               <thead class="table-light">
                 <tr>
-                  <th scope="col">#</th>
-                  <th scope="col" title="Peso muestra AGM">AGM</th>
-                  <th scope="col" title="Peso promedio empaque">ATM</th>
-                  <th scope="col" title="Cantidad real">Qi</th>
-                  <th scope="col">T1</th>
-                  <th scope="col">T2</th>
+                  <th scope="col" class="detail-th-sortable">
+                    <button type="button" class="detail-th-sort-btn" (click)="toggleDetailSort('lineNo')"
+                      [attr.aria-label]="detailSortAriaLabel('lineNo')">
+                      <span>#</span>
+                      <i class="bi" [ngClass]="detailSortIconClass('lineNo')" aria-hidden="true"></i>
+                    </button>
+                  </th>
+                  <th scope="col" class="detail-th-sortable" title="Peso muestra AGM">
+                    <button type="button" class="detail-th-sort-btn" (click)="toggleDetailSort('agm')"
+                      [attr.aria-label]="detailSortAriaLabel('agm')">
+                      <span>AGM</span>
+                      <i class="bi" [ngClass]="detailSortIconClass('agm')" aria-hidden="true"></i>
+                    </button>
+                  </th>
+                  <th scope="col" class="detail-th-sortable" title="Peso promedio empaque">
+                    <button type="button" class="detail-th-sort-btn" (click)="toggleDetailSort('atm')"
+                      [attr.aria-label]="detailSortAriaLabel('atm')">
+                      <span>ATM</span>
+                      <i class="bi" [ngClass]="detailSortIconClass('atm')" aria-hidden="true"></i>
+                    </button>
+                  </th>
+                  <th scope="col" class="detail-th-sortable" title="Cantidad real">
+                    <button type="button" class="detail-th-sort-btn" (click)="toggleDetailSort('qi')"
+                      [attr.aria-label]="detailSortAriaLabel('qi')">
+                      <span>Qi</span>
+                      <i class="bi" [ngClass]="detailSortIconClass('qi')" aria-hidden="true"></i>
+                    </button>
+                  </th>
+                  <th scope="col" class="detail-th-sortable">
+                    <button type="button" class="detail-th-sort-btn" (click)="toggleDetailSort('t1')"
+                      [attr.aria-label]="detailSortAriaLabel('t1')">
+                      <span>T1</span>
+                      <i class="bi" [ngClass]="detailSortIconClass('t1')" aria-hidden="true"></i>
+                    </button>
+                  </th>
+                  <th scope="col" class="detail-th-sortable">
+                    <button type="button" class="detail-th-sort-btn" (click)="toggleDetailSort('t2')"
+                      [attr.aria-label]="detailSortAriaLabel('t2')">
+                      <span>T2</span>
+                      <i class="bi" [ngClass]="detailSortIconClass('t2')" aria-hidden="true"></i>
+                    </button>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                @for (row of detailItems(); track $index) {
+                @for (entry of sortedDetailRows(); track trackDetailRow(entry)) {
+                  <tr>
+                    <td class="fw-semibold text-secondary">{{ entry.lineNo }}</td>
+                    <td>
+                      @if (isEditingItem(entry)) {
+                        <div class="detail-inline-edit">
+                          <div class="input-group input-group-sm justify-content-center">
+                            <input class="form-control text-center" type="number" step="0.01" [value]="editDraft()"
+                              (input)="editDraft.set($any($event.target).value)" />
+                            <button type="button" class="btn btn-success" (click)="saveEditItem()" title="Guardar">
+                              <i class="bi bi-check-lg" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" (click)="cancelEditItem()" title="Cancelar">
+                              <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                          </div>
+                          @if (previewQiFromAgm(); as qiPrev) {
+                            <span class="detail-inline-edit__hint">Qi → {{ qiPrev }} g</span>
+                          }
+                        </div>
+                      } @else {
+                        <span>{{ entry.row.sample_weight_agm | decimalMax }}</span>
+                        @if (auth.hasPermission('sampling:edit') && entry.row.id != null && editingItemId() == null) {
+                          <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" (click)="beginEditAgm(entry)"
+                            title="Editar AGM (recalcula Qi, ATM, T1 y T2)">
+                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                          </button>
+                        }
+                      }
+                    </td>
+                    <td>{{ entry.row.average_weight | decimalMax }}</td>
+                    <td class="fw-semibold">{{ entry.row.actual_quantity | decimalMax }}</td>
+                    <td class="detail-cell-tight" [ngClass]="cssClassForResult(entry.row.status, 'T1')">
+                      {{ labelForT1(entry.row.status) }}</td>
+                    <td class="detail-cell-tight" [ngClass]="cssClassForResult(entry.row.status, 'T2')">
+                      {{ labelForT2(entry.row.status) }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="text-muted small py-3">No hay ítems en este registro.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer modal-footer--compact py-2 px-3 border-top">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<div class="modal fade" id="packageWeightsModal" tabindex="-1" aria-hidden="true" aria-labelledby="packageWeightsModalTitle">
+  <div class="modal-dialog modal-dialog-scrollable modal-detail">
+    @if (selectedPackageWeights(); as pw) {
+      <div class="modal-content modal-content--compact">
+        <div class="modal-header modal-header--compact py-2 px-3 border-bottom">
+          <h2 id="packageWeightsModalTitle" class="modal-title h6 mb-0 flex-grow-1 pe-2">
+            Pesos de empaque (sin contenido)
+          </h2>
+          <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body modal-body--compact p-2 p-sm-3">
+          <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+            <span class="small text-muted">Registros: {{ pw.package_weights.length }}</span>
+            <span class="small fw-semibold">Promedio: {{ pw.average_weight | decimalMax }} g</span>
+          </div>
+          <div class="detail-table-scroll">
+            <table class="table table-bordered table-sm text-center align-middle mb-0 detail-items-table">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Peso (g)</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (w of pw.package_weights; track $index) {
                   <tr>
                     <td class="fw-semibold text-secondary">{{ $index + 1 }}</td>
-                    <td>{{ row.sample_weight_agm | decimalMax }}</td>
-                    <td>{{ row.average_weight | decimalMax }}</td>
-                    <td class="fw-semibold">{{ row.actual_quantity | decimalMax }}</td>
-                    <td class="detail-cell-tight" [ngClass]="cssClassForResult(row.status, 'T1')">
-                      {{ labelForT1(row.status) }}</td>
-                    <td class="detail-cell-tight" [ngClass]="cssClassForResult(row.status, 'T2')">
-                      {{ labelForT2(row.status) }}</td>
+                    <td>{{ w | decimalMax }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="2" class="text-muted small py-3">No hay pesos de empaque guardados.</td>
                   </tr>
                 }
               </tbody>

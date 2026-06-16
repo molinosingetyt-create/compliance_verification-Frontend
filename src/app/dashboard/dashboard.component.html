@@ -1,0 +1,302 @@
+<div class="dashboard-page">
+  <div class="container py-4">
+    <header class="dashboard-header mb-4">
+      <h1 class="dashboard-title">Dashboard de verificaciones</h1>
+      <p class="dashboard-subtitle text-muted mb-0">
+        Comportamiento de muestreos con filtros por período, máquina, producto y destino comercial
+      </p>
+    </header>
+
+    @if (loadError(); as err) {
+      <div class="alert alert-warning" role="alert">{{ err }}</div>
+    }
+
+    <section class="card shadow-sm border-0 mb-4 dashboard-filters" aria-label="Filtros del dashboard">
+      <div class="card-header bg-white fw-semibold d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <span><i class="bi bi-funnel me-2" aria-hidden="true"></i>Filtros</span>
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearFilters()">
+          Limpiar filtros
+        </button>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="filterForm" class="row g-3">
+          <div class="col-md-3 col-6">
+            <label class="form-label small" for="dashDateFrom">Desde</label>
+            <input id="dashDateFrom" type="date" class="form-control form-control-sm" formControlName="dateFrom" />
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label small" for="dashDateTo">Hasta</label>
+            <input id="dashDateTo" type="date" class="form-control form-control-sm" formControlName="dateTo" />
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label small" for="dashMachine">Máquina</label>
+            <select id="dashMachine" class="form-select form-select-sm" formControlName="machineId">
+              <option [ngValue]="null">Todas</option>
+              @for (m of machines(); track m.id) {
+                <option [ngValue]="m.id">{{ m.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label small" for="dashProduct">Producto</label>
+            <select id="dashProduct" class="form-select form-select-sm" formControlName="productId">
+              <option [ngValue]="null">Todos</option>
+              @for (p of products(); track p.id) {
+                <option [ngValue]="p.id">{{ p.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label small" for="dashBrand">Marca</label>
+            <select id="dashBrand" class="form-select form-select-sm" formControlName="brandId">
+              <option [ngValue]="null">Todas</option>
+              @for (b of brands(); track b.id) {
+                <option [ngValue]="b.id">{{ b.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label small" for="dashMarket">Destino comercial</label>
+            <select id="dashMarket" class="form-select form-select-sm" formControlName="marketDestination">
+              <option value="">Todos</option>
+              <option value="nacional">Nacional</option>
+              <option value="exportacion">Exportación</option>
+            </select>
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label small" for="dashStatus">Resultado</label>
+            <select id="dashStatus" class="form-select form-select-sm" formControlName="status">
+              <option [ngValue]="null">Todos</option>
+              <option [ngValue]="1">CUMPLE</option>
+              <option [ngValue]="2">NO CUMPLE</option>
+            </select>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    @if (loading()) {
+      <div class="dashboard-state" role="status">
+        <div class="spinner-border text-brand-azul" aria-hidden="true"></div>
+        <span>Cargando datos…</span>
+      </div>
+    } @else {
+      <section class="row g-3 mb-4" aria-label="Indicadores generales">
+        <div class="col-6 col-lg-3">
+          <div class="dashboard-kpi">
+            <span class="dashboard-kpi__label">Muestreos</span>
+            <span class="dashboard-kpi__value">{{ kpis().total }}</span>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="dashboard-kpi dashboard-kpi--ok">
+            <span class="dashboard-kpi__label">Tasa CUMPLE</span>
+            <span class="dashboard-kpi__value">{{ kpis().complyPct }}%</span>
+            <span class="dashboard-kpi__hint">{{ kpis().complyCount }} de {{ kpis().total }}</span>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="dashboard-kpi">
+            <span class="dashboard-kpi__label">Prom. errores T1</span>
+            <span class="dashboard-kpi__value">{{ kpis().avgT1 | decimalMax }}</span>
+            <span class="dashboard-kpi__hint">por muestreo</span>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="dashboard-kpi">
+            <span class="dashboard-kpi__label">Prom. errores T2</span>
+            <span class="dashboard-kpi__value">{{ kpis().avgT2 | decimalMax }}</span>
+            <span class="dashboard-kpi__hint">por muestreo</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card shadow-sm border-0 mb-4" aria-label="Desviación por máquina y día">
+        <div class="card-header bg-white">
+          <div class="fw-semibold">
+            <i class="bi bi-graph-up me-2 text-brand-azul" aria-hidden="true"></i>
+            Desviación estándar por máquina (por día)
+          </div>
+          <p class="text-muted small mb-0 mt-1">
+            Promedio diario del contenido neto según los filtros aplicados. Hasta 10 máquinas con más muestreos.
+          </p>
+        </div>
+        <div class="card-body">
+          @if (!machineDeviationChart().hasData) {
+            <p class="text-muted small mb-0">
+              No hay datos de desviación para mostrar con los filtros actuales.
+            </p>
+          } @else {
+            <app-dashboard-machine-deviation-chart [chartData]="machineDeviationChart()" />
+          }
+        </div>
+      </section>
+
+      <ul class="nav nav-tabs dashboard-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button
+            type="button"
+            class="nav-link"
+            [class.active]="activeTab() === 'machines'"
+            (click)="setTab('machines')"
+            role="tab"
+            [attr.aria-selected]="activeTab() === 'machines'">
+            <i class="bi bi-gear-wide-connected me-1" aria-hidden="true"></i>
+            Por máquinas
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            type="button"
+            class="nav-link"
+            [class.active]="activeTab() === 'products'"
+            (click)="setTab('products')"
+            role="tab"
+            [attr.aria-selected]="activeTab() === 'products'">
+            <i class="bi bi-box-seam me-1" aria-hidden="true"></i>
+            Por productos
+          </button>
+        </li>
+      </ul>
+
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <section class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white fw-semibold">
+              @if (activeTab() === 'machines') {
+                Resumen por máquina
+              } @else {
+                Resumen por producto
+              }
+              <span class="text-muted fw-normal small ms-1">({{ activeGroups().length }})</span>
+            </div>
+            <div class="card-body p-0">
+              @if (activeGroups().length === 0) {
+                <p class="text-muted small p-3 mb-0">Sin datos para los filtros seleccionados.</p>
+              } @else {
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover mb-0 align-middle dashboard-table">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col">
+                          @if (activeTab() === 'machines') {
+                            Máquina
+                          } @else {
+                            Producto
+                          }
+                        </th>
+                        <th scope="col" class="text-center">Muestreos</th>
+                        <th scope="col" class="text-center">% CUMPLE</th>
+                        <th scope="col" class="text-center">T1 prom.</th>
+                        <th scope="col" class="text-center">T2 prom.</th>
+                        <th scope="col" class="text-end">Qi prom. (g)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (g of activeGroups(); track g.key) {
+                        <tr>
+                          <td class="fw-semibold">{{ g.label }}</td>
+                          <td class="text-center">{{ g.count }}</td>
+                          <td class="text-center">
+                            <span
+                              class="badge rounded-pill"
+                              [class.text-bg-success]="g.complyPct >= 90"
+                              [class.text-bg-warning]="g.complyPct >= 70 && g.complyPct < 90"
+                              [class.text-bg-danger]="g.complyPct < 70">
+                              {{ g.complyPct }}%
+                            </span>
+                          </td>
+                          <td class="text-center">{{ g.avgT1 | decimalMax }}</td>
+                          <td class="text-center">{{ g.avgT2 | decimalMax }}</td>
+                          <td class="text-end">{{ g.avgNetWeight | decimalMax }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          </section>
+        </div>
+
+        <div class="col-lg-5">
+          <section class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white fw-semibold">% CUMPLE por grupo</div>
+            <div class="card-body">
+              @if (activeGroups().length === 0) {
+                <p class="text-muted small mb-0">Sin datos.</p>
+              } @else {
+                <ul class="dashboard-bars list-unstyled mb-0">
+                  @for (g of activeGroups().slice(0, 8); track g.key) {
+                    <li class="dashboard-bars__item">
+                      <div class="dashboard-bars__head">
+                        <span class="dashboard-bars__label" [title]="g.label">{{ g.label }}</span>
+                        <span class="dashboard-bars__pct">{{ g.complyPct }}%</span>
+                      </div>
+                      <div class="dashboard-bar" role="presentation">
+                        <div
+                          class="dashboard-bar__fill"
+                          [ngClass]="complyBarClass(g.complyPct)"
+                          [style.width]="barWidth(g.complyPct)"></div>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <section class="card shadow-sm border-0 mt-4">
+        <div class="card-header bg-white fw-semibold">Últimos muestreos (filtro aplicado)</div>
+        <div class="card-body p-0">
+          @if (recentRows().length === 0) {
+            <p class="text-muted small p-3 mb-0">No hay muestreos recientes con estos filtros.</p>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col">Fecha</th>
+                    <th scope="col">Producto</th>
+                    <th scope="col">Máquina</th>
+                    <th scope="col">Destino</th>
+                    <th scope="col" class="text-center">T1</th>
+                    <th scope="col" class="text-center">T2</th>
+                    <th scope="col" class="text-center">Resultado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (r of recentRows(); track r.id) {
+                    <tr>
+                      <td class="small text-nowrap">{{ r.created_at | date:'dd/MM/yy HH:mm' }}</td>
+                      <td class="small">
+                        {{ r.product_name }}
+                        @if (r.brand_name) {
+                          <span class="text-muted">· {{ r.brand_name }}</span>
+                        }
+                      </td>
+                      <td class="small">{{ r.machine_name }}</td>
+                      <td class="small">{{ marketDestinationLabel(r.market_destination) }}</td>
+                      <td class="text-center small">{{ r.t1_errors_count }}</td>
+                      <td class="text-center small">{{ r.t2_errors_count }}</td>
+                      <td class="text-center">
+                        <span
+                          class="badge rounded-pill"
+                          [class.text-bg-success]="r.status === 1"
+                          [class.text-bg-danger]="r.status === 2">
+                          {{ statusLabel(r.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</div>

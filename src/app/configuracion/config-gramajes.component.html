@@ -1,0 +1,119 @@
+<div class="config-page py-4">
+  <div class="container">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Gramajes</h1>
+        <p class="text-muted small mb-0">Contenido nominal y tolerancia para muestreo</p>
+      </div>
+      <button type="button" class="btn btn-success btn-sm" (click)="startCreate()">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
+        Nuevo gramaje
+      </button>
+    </div>
+
+    @if (message(); as m) {
+      <div class="alert alert-success py-2">{{ m }}</div>
+    }
+    @if (error(); as e) {
+      <div class="alert alert-danger py-2">{{ e }}</div>
+    }
+
+    @if (viewingItem(); as v) {
+      <div class="config-view-panel mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h2 class="h6 mb-0">Detalle</h2>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="closeView()"></button>
+        </div>
+        <dl>
+          <dt>ID</dt>
+          <dd>{{ v.id }}</dd>
+          <dt>Nombre</dt>
+          <dd>{{ v.name }}</dd>
+          <dt>Alias</dt>
+          <dd>{{ v.alias ?? '—' }}</dd>
+          <dt>Tolerancia</dt>
+          <dd>{{ v.tolerance ?? '—' }}</dd>
+        </dl>
+        <button type="button" class="btn btn-outline-primary btn-sm" (click)="startEdit(v)">Editar</button>
+      </div>
+    }
+
+    @if (showForm()) {
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white fw-semibold">
+          {{ editingId() == null ? 'Nuevo gramaje' : 'Editar gramaje' }}
+        </div>
+        <div class="card-body">
+          <form [formGroup]="form" (ngSubmit)="submit()" class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small">Nombre</label>
+              <input class="form-control form-control-sm" formControlName="name" placeholder="ej. 90" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">Alias</label>
+              <input class="form-control form-control-sm" formControlName="alias" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">Tolerancia (g)</label>
+              <input class="form-control form-control-sm" formControlName="tolerance" />
+            </div>
+            <div class="col-12 d-flex gap-2">
+              <button type="submit" class="btn btn-primary btn-sm" [disabled]="saving()">Guardar</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelForm()">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+    @if (loading()) {
+      <p class="text-muted">Cargando…</p>
+    } @else {
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white fw-semibold">Listado</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" style="width: 3rem">#</th>
+                  <th scope="col">Nombre</th>
+                  <th scope="col">Alias</th>
+                  <th scope="col">Tolerancia</th>
+                  <th scope="col" class="text-end" style="width: 9rem">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of items(); track p.id) {
+                  <tr>
+                    <td class="text-secondary small">{{ p.id }}</td>
+                    <td class="fw-semibold">{{ p.name }}</td>
+                    <td class="small">{{ p.alias }}</td>
+                    <td class="small">{{ p.tolerance }}</td>
+                    <td>
+                      <div class="config-crud-actions">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" title="Ver" (click)="viewItem(p)">
+                          <i class="bi bi-eye" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" title="Editar" (click)="startEdit(p)">
+                          <i class="bi bi-pencil" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" title="Eliminar" (click)="deleteItem(p)">
+                          <i class="bi bi-trash" aria-hidden="true"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="text-muted small p-3">Sin gramajes</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

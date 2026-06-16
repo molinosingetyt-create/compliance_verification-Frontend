@@ -1,16 +1,22 @@
+:host {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+}
+
 .app-shell {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: var(--app-bg, #ffffff);
 }
 
 .app-header {
+  flex-shrink: 0;
   background: var(--brand-azul, #0066cc);
   color: #fff;
   box-shadow: 0 4px 24px rgba(0, 40, 100, 0.22);
-  position: sticky;
-  top: 0;
   z-index: 100;
 }
 
@@ -63,7 +69,10 @@
 
 .app-main {
   flex: 1;
-  padding: 0 0 2rem;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 576px) {

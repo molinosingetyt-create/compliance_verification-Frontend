@@ -16,6 +16,7 @@ import {
 } from '@angular/forms';
 import { ComplianceVerificationService } from '../services/compliance-verification.service';
 import { CatalogService } from '../services/catalog.service';
+import { AuthService } from '../core/auth.service';
 import { showBootstrapModal } from '../core/bootstrap-modal';
 import { DecimalMaxPipe } from '../core/decimal-max.pipe';
 import type { CatalogEntity, Grammage, PackagingMachine } from '../models/catalog.model';
@@ -23,11 +24,50 @@ import type {
   ComplianceVerificationRow,
   ComplianceVerificationDetail,
   ComplianceVerificationCreatePayload,
+  ComplianceVerificationPackageWeights,
   ItemComplianceStatusClass,
+  ItemComplianceVerificationRow,
 } from '../models/compliance.model';
+
+/** Fila de la tabla de detalle con índice original del muestreo (para columna #). */
+interface DetailTableViewRow {
+  row: ItemComplianceVerificationRow;
+  lineNo: number;
+}
+
+/** Columnas ordenables del modal de detalle. */
+type DetailTableSortKey = 'lineNo' | 'agm' | 'atm' | 'qi' | 't1' | 't2';
+
+function compareNumericStrings(a: string, b: string): number {
+  const na = Number(a);
+  const nb = Number(b);
+  const aOk = Number.isFinite(na);
+  const bOk = Number.isFinite(nb);
+  if (aOk && bOk) {
+    return na < nb ? -1 : na > nb ? 1 : 0;
+  }
+  if (aOk !== bOk) {
+    return aOk ? -1 : 1;
+  }
+  return a.localeCompare(b, undefined, { numeric: true });
+}
+
+/** 0 = cumple, 1 = no cumple (para orden estable por severidad). */
+function complianceRankT1(status: number): number {
+  return status === 2 || status === 3 ? 1 : 0;
+}
+
+function complianceRankT2(status: number): number {
+  return status === 3 ? 1 : 0;
+}
 
 const PACKAGE_WEIGHT_SLOTS = 10;
 const SAMPLE_ITEM_COUNT = 98;
+
+export const MARKET_DESTINATION_OPTIONS = [
+  { value: 'nacional', label: 'Nacional' },
+  { value: 'exportacion', label: 'Exportación' },
+] as const;
 
 @Component({
   selector: 'app-compliance-verification',
@@ -40,9 +80,13 @@ export class ComplianceVerificationComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly complianceService = inject(ComplianceVerificationService);
   private readonly catalogService = inject(CatalogService);
+  readonly auth = inject(AuthService);
+
+  readonly marketDestinationOptions = MARKET_DESTINATION_OPTIONS;
 
   readonly verificationForm: FormGroup = this.fb.group({
     sampled: ['', Validators.required],
+    market_destination: [null as string | null, Validators.required],
     product_id: [null, Validators.required],
     brand_id: [null, Validators.required],
     grammage_id: [null, Validators.required],
@@ -70,9 +114,57 @@ export class ComplianceVerificationComponent implements OnInit {
   readonly listError = signal<string | null>(null);
 
   readonly selectedDetail = signal<ComplianceVerificationDetail | null>(null);
-  readonly detailItems = computed(
-    () => this.selectedDetail()?.item_compliance_verifications ?? []
-  );
+  readonly detailItems = computed(() => {
+    const items = this.selectedDetail()?.item_compliance_verifications ?? [];
+    return [...items].sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+  });
+
+  readonly selectedPackageWeights = signal<ComplianceVerificationPackageWeights | null>(null);
+
+  /** Edición inline de AGM en modal de detalle */
+  readonly editingItemId = signal<number | null>(null);
+  readonly editDraft = signal('');
+  /** Promedio de empaque del muestreo (para calcular Qi al editar AGM) */
+  readonly detailPackageAvg = signal<number | null>(null);
+
+  /** Orden activo en la tabla de detalle (null = orden original del API). */
+  readonly detailSort = signal<{ key: DetailTableSortKey; dir: 'asc' | 'desc' } | null>(null);
+
+  readonly sortedDetailRows = computed((): DetailTableViewRow[] => {
+    const items = this.detailItems();
+    const base = items.map((row, idx) => ({ row, lineNo: idx + 1 }));
+    const sort = this.detailSort();
+    if (!sort) {
+      return base;
+    }
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    return [...base].sort((a, b) => {
+      let cmp = 0;
+      switch (sort.key) {
+        case 'lineNo':
+          cmp = a.lineNo - b.lineNo;
+          break;
+        case 'agm':
+          cmp = compareNumericStrings(a.row.sample_weight_agm, b.row.sample_weight_agm);
+          break;
+        case 'atm':
+          cmp = compareNumericStrings(a.row.average_weight, b.row.average_weight);
+          break;
+        case 'qi':
+          cmp = compareNumericStrings(a.row.actual_quantity, b.row.actual_quantity);
+          break;
+        case 't1':
+          cmp = complianceRankT1(a.row.status) - complianceRankT1(b.row.status);
+          break;
+        case 't2':
+          cmp = complianceRankT2(a.row.status) - complianceRankT2(b.row.status);
+          break;
+        default:
+          cmp = 0;
+      }
+      return cmp * dir;
+    });
+  });
 
   readonly modalMessage = signal('');
   readonly modalType = signal<'success' | 'error'>('success');
@@ -96,6 +188,69 @@ export class ComplianceVerificationComponent implements OnInit {
     return this.verificationForm.get('package_weights') as FormArray;
   }
 
+  trackDetailRow(entry: DetailTableViewRow): number {
+    return entry.row.id ?? entry.lineNo;
+  }
+
+  isEditingItem(entry: DetailTableViewRow): boolean {
+    return this.editingItemId() === entry.row.id;
+  }
+
+  beginEditAgm(entry: DetailTableViewRow): void {
+    if (!this.auth.hasPermission('sampling:edit')) {
+      return;
+    }
+    const id = entry.row.id;
+    if (id == null) {
+      return;
+    }
+    this.editingItemId.set(id);
+    this.editDraft.set(String(entry.row.sample_weight_agm ?? ''));
+  }
+
+  cancelEditItem(): void {
+    this.editingItemId.set(null);
+    this.editDraft.set('');
+  }
+
+  previewQiFromAgm(): string | null {
+    const avg = this.detailPackageAvg();
+    if (avg == null || this.editingItemId() == null) {
+      return null;
+    }
+    const agm = Number(String(this.editDraft()).replace(',', '.'));
+    if (!Number.isFinite(agm)) {
+      return null;
+    }
+    return (agm - avg).toFixed(2);
+  }
+
+  saveEditItem(): void {
+    const id = this.editingItemId();
+    if (id == null) {
+      return;
+    }
+    const val = Number(String(this.editDraft()).replace(',', '.'));
+    if (!Number.isFinite(val)) {
+      this.openFeedbackModal('Valor inválido para AGM', 'error');
+      return;
+    }
+    const detId = this.selectedDetail()?.id;
+    this.complianceService.updateItem(id, { sample_weight_agm: val }).subscribe({
+      next: (res) => {
+        this.cancelEditItem();
+        if (detId != null) {
+          this.complianceService.getComplianceVerificationDetail(detId).subscribe({
+            next: (detail) => this.selectedDetail.set(detail),
+          });
+        }
+        this.loadVerifications();
+        this.openFeedbackModal(res.detail || 'Muestreo actualizado y reevaluado.', 'success');
+      },
+      error: () => this.openFeedbackModal('No se pudo guardar el AGM', 'error'),
+    });
+  }
+
   trackByVerificationId(_index: number, row: ComplianceVerificationRow): number {
     return row.id;
   }
@@ -103,14 +258,14 @@ export class ComplianceVerificationComponent implements OnInit {
   isStepValid(): boolean {
     if (this.step === 1) {
       const fields = [
-        'sampled',
+        'market_destination',
         'product_id',
         'brand_id',
         'grammage_id',
         'machine_id',
         'lot_expires',
       ] as const;
-      return fields.every((f) => this.verificationForm.get(f)?.valid);
+      return this.applySamplerIdentity() && fields.every((f) => this.verificationForm.get(f)?.valid);
     }
     if (this.step === 2) {
       return this.packageWeights.valid;
@@ -120,8 +275,9 @@ export class ComplianceVerificationComponent implements OnInit {
 
   markCurrentStepAsTouched(): void {
     if (this.step === 1) {
+      this.applySamplerIdentity();
       const fields = [
-        'sampled',
+        'market_destination',
         'product_id',
         'brand_id',
         'grammage_id',
@@ -161,7 +317,8 @@ export class ComplianceVerificationComponent implements OnInit {
     this.listError.set(null);
     this.complianceService.getComplianceVerifications().subscribe({
       next: (rows) => {
-        this.verifications.set(Array.isArray(rows) ? rows : []);
+        const list = Array.isArray(rows) ? rows : [];
+        this.verifications.set([...list].sort((a, b) => b.id - a.id));
         this.listLoading.set(false);
       },
       error: () => {
@@ -175,7 +332,18 @@ export class ComplianceVerificationComponent implements OnInit {
   startSampling(): void {
     this.showForm = true;
     this.step = 1;
-    this.verificationForm.reset();
+    this.verificationForm.reset({
+      sampled: '',
+      market_destination: null,
+      product_id: null,
+      brand_id: null,
+      grammage_id: null,
+      machine_id: null,
+      lot_expires: '',
+      package_average: '',
+    });
+    this.initPackageWeightSlots();
+    this.applySamplerIdentity();
 
     while (this.items.length !== 0) {
       this.items.removeAt(0);
@@ -184,6 +352,37 @@ export class ComplianceVerificationComponent implements OnInit {
     for (let i = 0; i < SAMPLE_ITEM_COUNT; i++) {
       this.addItem();
     }
+  }
+
+  private initPackageWeightSlots(): void {
+    const pw = this.packageWeights;
+    while (pw.length > 0) {
+      pw.removeAt(0);
+    }
+    for (let i = 0; i < PACKAGE_WEIGHT_SLOTS; i++) {
+      pw.push(
+        this.fb.control<string | number>('', [Validators.required, Validators.min(0.01)])
+      );
+    }
+  }
+
+  private applySamplerIdentity(): boolean {
+    const name = this.auth.displayName();
+    if (!name) {
+      return false;
+    }
+    this.verificationForm.patchValue({ sampled: name }, { emitEvent: false });
+    return true;
+  }
+
+  marketDestinationLabel(value: string | null | undefined): string {
+    if (value === 'exportacion') {
+      return 'Exportación';
+    }
+    if (value === 'nacional') {
+      return 'Nacional';
+    }
+    return value?.trim() ? value : '—';
   }
 
   cancelSampling(): void {
@@ -209,16 +408,48 @@ export class ComplianceVerificationComponent implements OnInit {
   }
 
   viewDetail(id: number): void {
+    this.resetDetailSort();
+    this.cancelEditItem();
+    this.detailPackageAvg.set(null);
     this.complianceService.getComplianceVerificationDetail(id).subscribe({
       next: (res) => {
         this.selectedDetail.set(res);
+        this.complianceService.getComplianceVerificationPackageWeights(id).subscribe({
+          next: (pw) => this.detailPackageAvg.set(pw.average_weight),
+          error: () => this.detailPackageAvg.set(null),
+        });
         queueMicrotask(() => showBootstrapModal('detailModal'));
       },
       error: (err) => console.error('Error al obtener detalle:', err),
     });
   }
 
+  detailVerdictLabel(status: number | undefined): string {
+    return status === 1 ? 'CUMPLE' : 'NO CUMPLE';
+  }
+
+  detailVerdictClass(status: number | undefined): string {
+    return status === 1 ? 'bg-success-soft' : 'bg-danger-soft';
+  }
+
+  viewPackageWeights(id: number): void {
+    this.complianceService.getComplianceVerificationPackageWeights(id).subscribe({
+      next: (res) => {
+        this.selectedPackageWeights.set(res);
+        queueMicrotask(() => showBootstrapModal('packageWeightsModal'));
+      },
+      error: (err) => console.error('Error al obtener pesos de empaque:', err),
+    });
+  }
+
   onSubmit(): void {
+    if (!this.applySamplerIdentity()) {
+      this.openFeedbackModal(
+        'No se pudo identificar al muestreador. Verifique su sesión o solicite al administrador que configure su nombre completo.',
+        'error'
+      );
+      return;
+    }
     if (!this.verificationForm.valid) {
       this.markCurrentStepAsTouched();
       this.openFeedbackModal('Por favor, complete todos los campos requeridos.', 'error');
@@ -274,6 +505,44 @@ export class ComplianceVerificationComponent implements OnInit {
     this.modalMessage.set(message);
     this.modalType.set(type);
     queueMicrotask(() => showBootstrapModal('responseModal'));
+  }
+
+  resetDetailSort(): void {
+    this.detailSort.set(null);
+  }
+
+  toggleDetailSort(key: DetailTableSortKey): void {
+    const cur = this.detailSort();
+    if (!cur || cur.key !== key) {
+      this.detailSort.set({ key, dir: 'asc' });
+      return;
+    }
+    this.detailSort.set({ key, dir: cur.dir === 'asc' ? 'desc' : 'asc' });
+  }
+
+  detailSortIconClass(key: DetailTableSortKey): string {
+    const s = this.detailSort();
+    if (!s || s.key !== key) {
+      return 'bi-arrow-down-up detail-sort-icon detail-sort-icon--idle';
+    }
+    return s.dir === 'asc' ? 'bi-sort-up detail-sort-icon' : 'bi-sort-down detail-sort-icon';
+  }
+
+  detailSortAriaLabel(key: DetailTableSortKey): string {
+    const titles: Record<DetailTableSortKey, string> = {
+      lineNo: 'número de ítem',
+      agm: 'AGM',
+      atm: 'ATM',
+      qi: 'Qi',
+      t1: 'T1',
+      t2: 'T2',
+    };
+    const s = this.detailSort();
+    if (!s || s.key !== key) {
+      return `Ordenar por ${titles[key]}`;
+    }
+    const next = s.dir === 'asc' ? 'descendente' : 'ascendente';
+    return `Orden ${s.dir === 'asc' ? 'ascendente' : 'descendente'} por ${titles[key]}. Clic para ${next}.`;
   }
 
   /** Etiqueta T1 según estado del ítem (2 o 3 → no cumple). */

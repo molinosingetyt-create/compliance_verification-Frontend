@@ -613,11 +613,65 @@ $brand-beige: #fcefd9;
   }
 }
 
+.detail-th-sortable {
+  padding: 0 !important;
+  vertical-align: middle;
+}
+
+.detail-th-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 100%;
+  min-height: 2rem;
+  margin: 0;
+  padding: 0.2rem 0.25rem;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.detail-th-sort-btn:hover,
+.detail-th-sort-btn:focus-visible {
+  background-color: rgba(16, 56, 71, 0.06);
+  outline: none;
+}
+
+.detail-sort-icon {
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  opacity: 0.95;
+}
+
+.detail-sort-icon--idle {
+  opacity: 0.45;
+}
+
 .detail-cell-tight {
   font-size: 0.68rem;
   font-weight: 700;
   padding-left: 0.2rem !important;
   padding-right: 0.2rem !important;
+}
+
+.detail-inline-edit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  max-width: 12rem;
+  margin: 0 auto;
+}
+
+.detail-inline-edit__hint {
+  font-size: 0.65rem;
+  color: #0066cc;
+  font-weight: 600;
 }
 
 /* HEADER PRINCIPAL */

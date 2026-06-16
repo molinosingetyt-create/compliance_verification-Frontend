@@ -1,0 +1,43 @@
+.config-page {
+  min-height: 100%;
+}
+
+.config-crud-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: flex-end;
+}
+
+.config-crud-actions .btn {
+  padding: 0.2rem 0.45rem;
+}
+
+.config-view-panel {
+  border: 1px solid rgba(16, 56, 71, 0.12);
+  border-radius: 8px;
+  background: #fff;
+  padding: 1rem 1.25rem;
+}
+
+.config-view-panel dl {
+  margin: 0;
+}
+
+.config-view-panel dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(16, 56, 71, 0.65);
+  margin-bottom: 0.15rem;
+}
+
+.config-view-panel dd {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #103847;
+}
+
+.config-view-panel dd:last-child {
+  margin-bottom: 0;
+}

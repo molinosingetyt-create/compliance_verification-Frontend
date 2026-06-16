@@ -6,7 +6,10 @@ import type {
   ComplianceVerificationCreatePayload,
   ComplianceVerificationDetail,
   ComplianceVerificationRow,
+  ComplianceVerificationPackageWeights,
   CreateComplianceVerificationResponse,
+  UpdateItemPayload,
+  UpdateItemResponse,
 } from '../models/compliance.model';
 
 @Injectable({ providedIn: 'root' })
@@ -26,5 +29,17 @@ export class ComplianceVerificationService {
 
   getComplianceVerificationDetail(id: number): Observable<ComplianceVerificationDetail> {
     return this.http.get<ComplianceVerificationDetail>(`${this.apiUrl}/list/${id}`);
+  }
+
+  getComplianceVerificationPackageWeights(
+    id: number
+  ): Observable<ComplianceVerificationPackageWeights> {
+    return this.http.get<ComplianceVerificationPackageWeights>(
+      `${this.apiUrl}/list/${id}/package-weights`
+    );
+  }
+
+  updateItem(itemId: number, body: UpdateItemPayload): Observable<UpdateItemResponse> {
+    return this.http.put<UpdateItemResponse>(`${this.apiUrl}/items/${itemId}`, body);
   }
 }
