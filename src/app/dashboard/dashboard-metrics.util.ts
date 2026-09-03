@@ -1,9 +1,11 @@
 import type { ComplianceVerificationRow, MarketDestination } from '../models/compliance.model';
+import type { PackagingMachine } from '../models/catalog.model';
 
 export interface DashboardFilters {
   dateFrom: string | null;
   dateTo: string | null;
-  machineId: number | null;
+  packagingAreaId: number | null;
+  machineIds: number[];
   productId: number | null;
   brandId: number | null;
   marketDestination: MarketDestination | '' | null;
@@ -17,6 +19,8 @@ export interface DashboardKpis {
   avgT1: number;
   avgT2: number;
   avgUnderNominalPct: number;
+  avgNetWeight: number;
+  avgGrossWeight: number;
 }
 
 export interface DashboardGroupRow {
@@ -35,7 +39,8 @@ export interface DashboardGroupRow {
 export const EMPTY_DASHBOARD_FILTERS: DashboardFilters = {
   dateFrom: null,
   dateTo: null,
-  machineId: null,
+  packagingAreaId: null,
+  machineIds: [],
   productId: null,
   brandId: null,
   marketDestination: null,
@@ -57,11 +62,27 @@ function toDateOnly(d: Date): string {
 
 export function applyDashboardFilters(
   rows: ComplianceVerificationRow[],
-  filters: DashboardFilters
+  filters: DashboardFilters,
+  machines: PackagingMachine[] = []
 ): ComplianceVerificationRow[] {
+  const areaMachineIds =
+    filters.packagingAreaId != null
+      ? new Set(
+          machines
+            .filter((m) => m.packaging_area_id === filters.packagingAreaId)
+            .map((m) => m.id)
+        )
+      : null;
+
   return rows.filter((row) => {
-    if (filters.machineId != null && row.machine_id !== filters.machineId) {
-      return false;
+    if (filters.machineIds.length > 0) {
+      if (row.machine_id == null || !filters.machineIds.includes(row.machine_id)) {
+        return false;
+      }
+    } else if (areaMachineIds != null) {
+      if (row.machine_id == null || !areaMachineIds.has(row.machine_id)) {
+        return false;
+      }
     }
     if (filters.productId != null && row.product_id !== filters.productId) {
       return false;
@@ -100,12 +121,16 @@ export function computeGlobalKpis(rows: ComplianceVerificationRow[]): DashboardK
       avgT1: 0,
       avgT2: 0,
       avgUnderNominalPct: 0,
+      avgNetWeight: 0,
+      avgGrossWeight: 0,
     };
   }
   const complyCount = rows.filter((r) => r.status === 1).length;
   const sumT1 = rows.reduce((a, r) => a + (r.t1_errors_count ?? 0), 0);
   const sumT2 = rows.reduce((a, r) => a + (r.t2_errors_count ?? 0), 0);
   const sumUnder = rows.reduce((a, r) => a + (r.percentage_under_nominal ?? 0), 0);
+  const sumNet = rows.reduce((a, r) => a + (r.avg_net_weight ?? 0), 0);
+  const sumGross = rows.reduce((a, r) => a + (r.avg_gross_weight ?? 0), 0);
   return {
     total,
     complyCount,
@@ -113,6 +138,8 @@ export function computeGlobalKpis(rows: ComplianceVerificationRow[]): DashboardK
     avgT1: Math.round((sumT1 / total) * 100) / 100,
     avgT2: Math.round((sumT2 / total) * 100) / 100,
     avgUnderNominalPct: Math.round((sumUnder / total) * 100) / 100,
+    avgNetWeight: Math.round((sumNet / total) * 100) / 100,
+    avgGrossWeight: Math.round((sumGross / total) * 100) / 100,
   };
 }
 

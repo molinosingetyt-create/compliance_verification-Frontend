@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth.service';
@@ -16,6 +16,16 @@ export class MainLayoutComponent {
 
   /** En vista móvil el menú lateral se abre/cierra con el botón hamburguesa */
   readonly mobileNavOpen = signal(false);
+
+  readonly initials = computed(() => {
+    const words = this.auth.displayName().trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+      return '?';
+    }
+    const first = words[0][0] ?? '';
+    const last = words.length > 1 ? (words[words.length - 1][0] ?? '') : '';
+    return (first + last).toUpperCase();
+  });
 
   logout(): void {
     this.auth.logout();

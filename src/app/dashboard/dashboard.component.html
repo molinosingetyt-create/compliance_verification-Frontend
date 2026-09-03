@@ -1,79 +1,26 @@
 <div class="dashboard-page">
   <div class="container py-4">
-    <header class="dashboard-header mb-4">
-      <h1 class="dashboard-title">Dashboard de verificaciones</h1>
-      <p class="dashboard-subtitle text-muted mb-0">
-        Comportamiento de muestreos con filtros por período, máquina, producto y destino comercial
-      </p>
+    <header class="dashboard-header mb-4 d-flex flex-wrap align-items-start justify-content-between gap-3">
+      <div>
+        <h1 class="dashboard-title">Dashboard de verificaciones</h1>
+        <p class="dashboard-subtitle text-muted mb-0">
+          Comportamiento de muestreos con filtros por período, área, máquina, producto y destino comercial
+        </p>
+      </div>
+      <button type="button" class="btn btn-outline-secondary position-relative" (click)="openFiltersModal()">
+        <i class="bi bi-funnel me-2" aria-hidden="true"></i>
+        Filtros
+        @if (activeFilterCount() > 0) {
+          <span class="badge rounded-pill text-bg-primary dashboard-filters__count-badge">
+            {{ activeFilterCount() }}
+          </span>
+        }
+      </button>
     </header>
 
     @if (loadError(); as err) {
       <div class="alert alert-warning" role="alert">{{ err }}</div>
     }
-
-    <section class="card shadow-sm border-0 mb-4 dashboard-filters" aria-label="Filtros del dashboard">
-      <div class="card-header bg-white fw-semibold d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <span><i class="bi bi-funnel me-2" aria-hidden="true"></i>Filtros</span>
-        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearFilters()">
-          Limpiar filtros
-        </button>
-      </div>
-      <div class="card-body">
-        <form [formGroup]="filterForm" class="row g-3">
-          <div class="col-md-3 col-6">
-            <label class="form-label small" for="dashDateFrom">Desde</label>
-            <input id="dashDateFrom" type="date" class="form-control form-control-sm" formControlName="dateFrom" />
-          </div>
-          <div class="col-md-3 col-6">
-            <label class="form-label small" for="dashDateTo">Hasta</label>
-            <input id="dashDateTo" type="date" class="form-control form-control-sm" formControlName="dateTo" />
-          </div>
-          <div class="col-md-3 col-6">
-            <label class="form-label small" for="dashMachine">Máquina</label>
-            <select id="dashMachine" class="form-select form-select-sm" formControlName="machineId">
-              <option [ngValue]="null">Todas</option>
-              @for (m of machines(); track m.id) {
-                <option [ngValue]="m.id">{{ m.name }}</option>
-              }
-            </select>
-          </div>
-          <div class="col-md-3 col-6">
-            <label class="form-label small" for="dashProduct">Producto</label>
-            <select id="dashProduct" class="form-select form-select-sm" formControlName="productId">
-              <option [ngValue]="null">Todos</option>
-              @for (p of products(); track p.id) {
-                <option [ngValue]="p.id">{{ p.name }}</option>
-              }
-            </select>
-          </div>
-          <div class="col-md-3 col-6">
-            <label class="form-label small" for="dashBrand">Marca</label>
-            <select id="dashBrand" class="form-select form-select-sm" formControlName="brandId">
-              <option [ngValue]="null">Todas</option>
-              @for (b of brands(); track b.id) {
-                <option [ngValue]="b.id">{{ b.name }}</option>
-              }
-            </select>
-          </div>
-          <div class="col-md-3 col-6">
-            <label class="form-label small" for="dashMarket">Destino comercial</label>
-            <select id="dashMarket" class="form-select form-select-sm" formControlName="marketDestination">
-              <option value="">Todos</option>
-              <option value="nacional">Nacional</option>
-              <option value="exportacion">Exportación</option>
-            </select>
-          </div>
-          <div class="col-md-3 col-6">
-            <label class="form-label small" for="dashStatus">Resultado</label>
-            <select id="dashStatus" class="form-select form-select-sm" formControlName="status">
-              <option [ngValue]="null">Todos</option>
-              <option [ngValue]="1">CUMPLE</option>
-              <option [ngValue]="2">NO CUMPLE</option>
-            </select>
-          </div>
-        </form>
-      </div>
-    </section>
 
     @if (loading()) {
       <div class="dashboard-state" role="status">
@@ -107,6 +54,20 @@
             <span class="dashboard-kpi__label">Prom. errores T2</span>
             <span class="dashboard-kpi__value">{{ kpis().avgT2 | decimalMax }}</span>
             <span class="dashboard-kpi__hint">por muestreo</span>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="dashboard-kpi">
+            <span class="dashboard-kpi__label">Prom. contenido neto</span>
+            <span class="dashboard-kpi__value">{{ kpis().avgNetWeight | decimalMax }}</span>
+            <span class="dashboard-kpi__hint">g · por muestreo</span>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="dashboard-kpi">
+            <span class="dashboard-kpi__label">Prom. contenido c/empaque</span>
+            <span class="dashboard-kpi__value">{{ kpis().avgGrossWeight | decimalMax }}</span>
+            <span class="dashboard-kpi__hint">g · por muestreo</span>
           </div>
         </div>
       </section>
@@ -298,5 +259,134 @@
         </div>
       </section>
     }
+  </div>
+
+  <div class="modal fade" id="dashboardFiltersModal" tabindex="-1" aria-hidden="true" aria-labelledby="dashboardFiltersModalTitle">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+      <div class="modal-content">
+        <div class="modal-header py-2 px-3 border-bottom">
+          <h2 id="dashboardFiltersModalTitle" class="modal-title h6 mb-0 flex-grow-1 pe-2">
+            <i class="bi bi-funnel me-2" aria-hidden="true"></i>Filtros
+          </h2>
+          <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-3">
+          <form [formGroup]="filterForm">
+            <div class="dashboard-filters__group">
+              <span class="dashboard-filters__group-label">Rango de fechas</span>
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <label class="form-label small" for="dashDateFrom">Desde</label>
+                  <input id="dashDateFrom" type="date" class="form-control form-control-sm" formControlName="dateFrom" />
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label small" for="dashDateTo">Hasta</label>
+                  <input id="dashDateTo" type="date" class="form-control form-control-sm" formControlName="dateTo" />
+                </div>
+              </div>
+            </div>
+
+            <hr class="dashboard-filters__divider" />
+
+            <div class="dashboard-filters__group">
+              <span class="dashboard-filters__group-label">Área y máquinas</span>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small" for="dashArea">Área de empaque</label>
+                  <select id="dashArea" class="form-select form-select-sm" formControlName="packagingAreaId">
+                    <option [ngValue]="null">Todas</option>
+                    @for (a of packagingAreas(); track a.id) {
+                      <option [ngValue]="a.id">{{ a.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small" id="dashMachinesLabel">Máquinas</label>
+                  <div class="dashboard-machines-select" [class.open]="machinesMenuOpen()">
+                    <button
+                      type="button"
+                      class="form-select form-select-sm text-start"
+                      aria-haspopup="listbox"
+                      [attr.aria-expanded]="machinesMenuOpen()"
+                      aria-labelledby="dashMachinesLabel"
+                      (click)="toggleMachinesMenu()">
+                      {{ machinesSummaryLabel() }}
+                    </button>
+                    @if (machinesMenuOpen()) {
+                      <div class="dashboard-machines-menu" role="listbox">
+                        @for (m of areaMachines(); track m.id) {
+                          <label class="dashboard-machines-menu__item">
+                            <input
+                              type="checkbox"
+                              [checked]="isMachineSelected(m.id)"
+                              (change)="toggleMachine(m.id)" />
+                            {{ m.name }}
+                          </label>
+                        } @empty {
+                          <p class="text-muted small px-2 py-1 mb-0">Sin máquinas</p>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <p class="form-text small mb-0">Sin selección: se muestran todas las máquinas del área.</p>
+                </div>
+              </div>
+            </div>
+
+            <hr class="dashboard-filters__divider" />
+
+            <div class="dashboard-filters__group">
+              <span class="dashboard-filters__group-label">Producto y resultado</span>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label small" for="dashProduct">Producto</label>
+                  <select id="dashProduct" class="form-select form-select-sm" formControlName="productId">
+                    <option [ngValue]="null">Todos</option>
+                    @for (p of products(); track p.id) {
+                      <option [ngValue]="p.id">{{ p.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small" for="dashBrand">Marca</label>
+                  <select id="dashBrand" class="form-select form-select-sm" formControlName="brandId">
+                    <option [ngValue]="null">Todas</option>
+                    @for (b of brands(); track b.id) {
+                      <option [ngValue]="b.id">{{ b.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small" for="dashMarket">Destino comercial</label>
+                  <select id="dashMarket" class="form-select form-select-sm" formControlName="marketDestination">
+                    <option value="">Todos</option>
+                    <option value="nacional">Nacional</option>
+                    <option value="exportacion">Exportación</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small" for="dashStatus">Resultado</label>
+                  <select id="dashStatus" class="form-select form-select-sm" formControlName="status">
+                    <option [ngValue]="null">Todos</option>
+                    <option [ngValue]="1">CUMPLE</option>
+                    <option [ngValue]="2">NO CUMPLE</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer py-2 px-3 border-top">
+          <button type="button" class="btn btn-sm btn-outline-danger me-auto" (click)="clearFilters()">
+            Limpiar
+          </button>
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal" (click)="applyFilters()">
+            <i class="bi bi-check-lg me-1" aria-hidden="true"></i>
+            Aceptar
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

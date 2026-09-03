@@ -259,6 +259,22 @@ $brand-beige: #fcefd9;
   min-width: 200px;
 }
 
+.header-responsive__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.compliance-filters__count-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 0.65rem;
+  line-height: 1;
+  padding: 0.32em 0.5em;
+}
+
 /* Progreso wizard */
 .wizard-progress {
   display: flex;
@@ -729,6 +745,40 @@ $brand-beige: #fcefd9;
   i {
     font-size: 1.1rem;
   }
+
+  &.btn-action-view--danger {
+    color: var(--brand-rojo-oscuro, #c1272d);
+    border-color: rgba(193, 39, 45, 0.35);
+
+    &:hover {
+      background-color: var(--brand-rojo-oscuro, #c1272d);
+      border-color: var(--brand-rojo-oscuro, #c1272d);
+      color: white;
+    }
+  }
+}
+
+.compliance-filters__group {
+  & + .compliance-filters__group {
+    margin-top: 0;
+  }
+}
+
+.compliance-filters__group-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand-azul, #0066cc);
+  margin-bottom: 0.75rem;
+}
+
+.compliance-filters__divider {
+  margin: 1.25rem 0;
+  border: none;
+  border-top: 1px solid $brand-beige;
+  opacity: 1;
 }
 
 /* =========================================

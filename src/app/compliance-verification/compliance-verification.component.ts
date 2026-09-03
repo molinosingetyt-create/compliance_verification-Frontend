@@ -64,6 +64,17 @@ function complianceRankT2(status: number): number {
 const PACKAGE_WEIGHT_SLOTS = 10;
 const SAMPLE_ITEM_COUNT = 98;
 
+const EMPTY_LIST_FILTERS = {
+  dateFrom: '',
+  dateTo: '',
+  productId: null as number | null,
+  brandId: null as number | null,
+  grammageId: null as number | null,
+  lot: '',
+  status: null as number | null,
+  sampled: '',
+};
+
 export const MARKET_DESTINATION_OPTIONS = [
   { value: 'nacional', label: 'Nacional' },
   { value: 'exportacion', label: 'Exportación' },
@@ -113,6 +124,50 @@ export class ComplianceVerificationComponent implements OnInit {
   readonly listLoading = signal(true);
   readonly listError = signal<string | null>(null);
 
+  readonly listFilterForm = this.fb.group({
+    dateFrom: [''],
+    dateTo: [''],
+    productId: [null as number | null],
+    brandId: [null as number | null],
+    grammageId: [null as number | null],
+    lot: [''],
+    status: [null as number | null],
+    sampled: [''],
+  });
+
+  /** Filtros aplicados (los que realmente afectan la tabla; se actualizan al presionar "Aceptar"). */
+  readonly appliedListFilters = signal({ ...EMPTY_LIST_FILTERS });
+
+  readonly activeFilterCount = computed(() => {
+    const f = this.appliedListFilters();
+    return Object.values(f).filter((v) => v != null && v !== '').length;
+  });
+
+  readonly filteredVerifications = computed(() => {
+    const f = this.appliedListFilters();
+    return this.verifications().filter((v) => {
+      if (f.productId != null && v.product_id !== f.productId) {
+        return false;
+      }
+      if (f.brandId != null && v.brand_id !== f.brandId) {
+        return false;
+      }
+      if (f.grammageId != null && v.grammage_id !== f.grammageId) {
+        return false;
+      }
+      if (f.status != null && v.status !== f.status) {
+        return false;
+      }
+      if (f.lot && !(v.lot_expires ?? '').toLowerCase().includes(f.lot.toLowerCase())) {
+        return false;
+      }
+      if (f.sampled && !(v.sampled ?? '').toLowerCase().includes(f.sampled.toLowerCase())) {
+        return false;
+      }
+      return true;
+    });
+  });
+
   readonly selectedDetail = signal<ComplianceVerificationDetail | null>(null);
   readonly detailItems = computed(() => {
     const items = this.selectedDetail()?.item_compliance_verifications ?? [];
@@ -120,6 +175,10 @@ export class ComplianceVerificationComponent implements OnInit {
   });
 
   readonly selectedPackageWeights = signal<ComplianceVerificationPackageWeights | null>(null);
+  readonly selectedPackageWeightsId = signal<number | null>(null);
+  readonly editingPackageWeights = signal(false);
+  readonly packageWeightsDraft = signal<string[]>([]);
+  readonly savingPackageWeights = signal(false);
 
   /** Edición inline de AGM en modal de detalle */
   readonly editingItemId = signal<number | null>(null);
@@ -172,6 +231,50 @@ export class ComplianceVerificationComponent implements OnInit {
   constructor() {
     this.packageWeights.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.calculatePackageAverage();
+    });
+  }
+
+  /** Al abrir el modal, el formulario parte de lo último aplicado (cancelar no pierde nada). */
+  openFiltersModal(): void {
+    this.listFilterForm.reset({ ...this.appliedListFilters() });
+    showBootstrapModal('filtersModal');
+  }
+
+  /** Aplica el borrador del modal: dispara la búsqueda por fecha en el API y filtra el resto localmente. */
+  applyListFilters(): void {
+    const v = this.listFilterForm.getRawValue();
+    this.appliedListFilters.set({
+      dateFrom: v.dateFrom?.trim() ?? '',
+      dateTo: v.dateTo?.trim() ?? '',
+      productId: v.productId,
+      brandId: v.brandId,
+      grammageId: v.grammageId,
+      lot: v.lot?.trim() ?? '',
+      status: v.status === 1 || v.status === 2 ? v.status : null,
+      sampled: v.sampled?.trim() ?? '',
+    });
+    this.loadVerifications();
+  }
+
+  clearListFilters(): void {
+    this.listFilterForm.reset({ ...EMPTY_LIST_FILTERS });
+    this.appliedListFilters.set({ ...EMPTY_LIST_FILTERS });
+    this.loadVerifications();
+  }
+
+  deleteVerification(v: ComplianceVerificationRow): void {
+    if (!this.auth.canDeleteSampling()) {
+      return;
+    }
+    if (!confirm(`¿Eliminar el muestreo #${v.id}? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    this.complianceService.deleteComplianceVerification(v.id).subscribe({
+      next: () => {
+        this.openFeedbackModal('Muestreo eliminado.', 'success');
+        this.loadVerifications();
+      },
+      error: () => this.openFeedbackModal('No se pudo eliminar el muestreo.', 'error'),
     });
   }
 
@@ -315,7 +418,8 @@ export class ComplianceVerificationComponent implements OnInit {
   loadVerifications(): void {
     this.listLoading.set(true);
     this.listError.set(null);
-    this.complianceService.getComplianceVerifications().subscribe({
+    const { dateFrom, dateTo } = this.appliedListFilters();
+    this.complianceService.getComplianceVerifications(dateFrom, dateTo).subscribe({
       next: (rows) => {
         const list = Array.isArray(rows) ? rows : [];
         this.verifications.set([...list].sort((a, b) => b.id - a.id));
@@ -433,12 +537,68 @@ export class ComplianceVerificationComponent implements OnInit {
   }
 
   viewPackageWeights(id: number): void {
+    this.selectedPackageWeightsId.set(id);
+    this.editingPackageWeights.set(false);
     this.complianceService.getComplianceVerificationPackageWeights(id).subscribe({
       next: (res) => {
         this.selectedPackageWeights.set(res);
         queueMicrotask(() => showBootstrapModal('packageWeightsModal'));
       },
       error: (err) => console.error('Error al obtener pesos de empaque:', err),
+    });
+  }
+
+  startEditPackageWeights(): void {
+    if (!this.auth.canEditPackageWeights()) {
+      return;
+    }
+    const pw = this.selectedPackageWeights();
+    if (!pw) {
+      return;
+    }
+    this.packageWeightsDraft.set(pw.package_weights.map((w) => String(w)));
+    this.editingPackageWeights.set(true);
+  }
+
+  cancelEditPackageWeights(): void {
+    this.editingPackageWeights.set(false);
+    this.packageWeightsDraft.set([]);
+  }
+
+  updatePackageWeightDraft(index: number, value: string): void {
+    this.packageWeightsDraft.update((draft) => {
+      const next = [...draft];
+      next[index] = value;
+      return next;
+    });
+  }
+
+  savePackageWeights(): void {
+    const id = this.selectedPackageWeightsId();
+    if (id == null) {
+      return;
+    }
+    const parsed = this.packageWeightsDraft().map((v) => Number(String(v).replace(',', '.')));
+    if (parsed.length === 0 || parsed.some((n) => !Number.isFinite(n) || n <= 0)) {
+      this.openFeedbackModal('Cada peso de empaque debe ser un número mayor que cero.', 'error');
+      return;
+    }
+    this.savingPackageWeights.set(true);
+    this.complianceService.updatePackageWeights(id, parsed).subscribe({
+      next: (res) => {
+        this.savingPackageWeights.set(false);
+        this.editingPackageWeights.set(false);
+        this.selectedPackageWeights.set({
+          package_weights: res.package_weights,
+          average_weight: res.average_weight,
+        });
+        this.openFeedbackModal(res.detail, 'success');
+        this.loadVerifications();
+      },
+      error: (err) => {
+        this.savingPackageWeights.set(false);
+        this.handleHttpError(err);
+      },
     });
   }
 

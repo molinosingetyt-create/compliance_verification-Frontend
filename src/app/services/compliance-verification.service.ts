@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import type {
@@ -10,6 +10,7 @@ import type {
   CreateComplianceVerificationResponse,
   UpdateItemPayload,
   UpdateItemResponse,
+  UpdatePackageWeightsResponse,
 } from '../models/compliance.model';
 
 @Injectable({ providedIn: 'root' })
@@ -23,8 +24,22 @@ export class ComplianceVerificationService {
     return this.http.post<CreateComplianceVerificationResponse>(`${this.apiUrl}/create`, data);
   }
 
-  getComplianceVerifications(): Observable<ComplianceVerificationRow[]> {
-    return this.http.get<ComplianceVerificationRow[]>(`${this.apiUrl}/list-all`);
+  getComplianceVerifications(
+    dateFrom?: string | null,
+    dateTo?: string | null
+  ): Observable<ComplianceVerificationRow[]> {
+    let params = new HttpParams();
+    if (dateFrom) {
+      params = params.set('date_from', dateFrom);
+    }
+    if (dateTo) {
+      params = params.set('date_to', dateTo);
+    }
+    return this.http.get<ComplianceVerificationRow[]>(`${this.apiUrl}/list-all`, { params });
+  }
+
+  deleteComplianceVerification(id: number): Observable<{ detail: string }> {
+    return this.http.delete<{ detail: string }>(`${this.apiUrl}/list/${id}`);
   }
 
   getComplianceVerificationDetail(id: number): Observable<ComplianceVerificationDetail> {
@@ -41,5 +56,14 @@ export class ComplianceVerificationService {
 
   updateItem(itemId: number, body: UpdateItemPayload): Observable<UpdateItemResponse> {
     return this.http.put<UpdateItemResponse>(`${this.apiUrl}/items/${itemId}`, body);
+  }
+
+  updatePackageWeights(
+    id: number,
+    packageWeights: number[]
+  ): Observable<UpdatePackageWeightsResponse> {
+    return this.http.put<UpdatePackageWeightsResponse>(`${this.apiUrl}/list/${id}/package-weights`, {
+      package_weights: packageWeights,
+    });
   }
 }

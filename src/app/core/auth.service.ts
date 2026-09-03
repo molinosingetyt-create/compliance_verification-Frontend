@@ -64,6 +64,8 @@ export class AuthService {
 
   readonly canEditNetContent = computed(() => this.hasPermission('sampling:edit'));
   readonly canCreateSampling = computed(() => this.hasPermission('sampling:create'));
+  readonly canDeleteSampling = computed(() => this.hasPermission('sampling:delete'));
+  readonly canEditPackageWeights = computed(() => this.hasPermission('sampling:edit-package'));
   readonly canManageUsers = computed(() => this.hasPermission('users:manage'));
   readonly canManageCatalog = computed(() => this.hasPermission('catalog:manage'));
   readonly canAccessConfiguration = computed(

@@ -9,8 +9,17 @@
 
   <aside class="main-layout__sidebar" aria-label="Menú de la aplicación">
     <div class="main-layout__sidebar-brand">
-      <span class="main-layout__sidebar-title">Contenido neto</span>
-      <span class="main-layout__sidebar-sub">Cumplimiento</span>
+      <img
+        class="main-layout__sidebar-logo"
+        src="assets/logo-molinos.jpg"
+        alt=""
+        aria-hidden="true"
+        width="34"
+        height="34" />
+      <span class="main-layout__sidebar-brand-text">
+        <span class="main-layout__sidebar-title">Molinos del Atlántico</span>
+        <span class="main-layout__sidebar-sub">Contenido neto</span>
+      </span>
     </div>
 
     <nav id="app-sidebar-nav" class="main-layout__nav">
@@ -69,6 +78,33 @@
                 <i class="bi bi-rulers" aria-hidden="true"></i>
                 Gramajes
               </a>
+              <a
+                routerLink="/configuracion/areas"
+                routerLinkActive="main-layout__nav-link--active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="main-layout__nav-link main-layout__nav-link--sub"
+                (click)="onSidebarLinkClick()">
+                <i class="bi bi-building" aria-hidden="true"></i>
+                Áreas
+              </a>
+              <a
+                routerLink="/configuracion/unidades-hora"
+                routerLinkActive="main-layout__nav-link--active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="main-layout__nav-link main-layout__nav-link--sub"
+                (click)="onSidebarLinkClick()">
+                <i class="bi bi-speedometer2" aria-hidden="true"></i>
+                Unidades/hora
+              </a>
+              <a
+                routerLink="/configuracion/tamanos-lote"
+                routerLinkActive="main-layout__nav-link--active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="main-layout__nav-link main-layout__nav-link--sub"
+                (click)="onSidebarLinkClick()">
+                <i class="bi bi-boxes" aria-hidden="true"></i>
+                Tamaños de lote
+              </a>
             }
             @if (auth.canManageUsers()) {
               <a
@@ -116,17 +152,24 @@
         aria-label="Abrir o cerrar menú">
         <i class="bi bi-list" aria-hidden="true"></i>
       </button>
+      <div class="main-layout__toolbar-titles">
+        <span class="main-layout__toolbar-title">Verificación de cumplimiento de contenido neto</span>
+        <span class="main-layout__toolbar-subtitle">Verificación de contenido neto</span>
+      </div>
       <div class="main-layout__toolbar-spacer d-none d-md-block"></div>
       <div class="main-layout__toolbar-actions">
-        <div class="main-layout__toolbar-user small text-secondary text-truncate">
-          @if (auth.user(); as u) {
-            <span class="fw-semibold text-body" [attr.title]="u.username">{{ auth.displayName() }}</span>
-            @if (u.role?.name) {
-              <span class="text-muted ms-1">· {{ u.role?.name }}</span>
-            }
-          }
-        </div>
-        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="logout()">Salir</button>
+        @if (auth.user(); as u) {
+          <div class="main-layout__toolbar-user text-truncate">
+            <span class="main-layout__avatar" aria-hidden="true">{{ initials() }}</span>
+            <span class="main-layout__toolbar-user-info">
+              <span class="main-layout__toolbar-user-name" [attr.title]="u.username">{{ auth.displayName() }}</span>
+              @if (u.role?.name) {
+                <span class="main-layout__toolbar-user-role">{{ u.role?.name }}</span>
+              }
+            </span>
+          </div>
+        }
+        <button type="button" class="btn btn-outline-light btn-sm main-layout__logout-btn" (click)="logout()">Salir</button>
       </div>
     </header>
 

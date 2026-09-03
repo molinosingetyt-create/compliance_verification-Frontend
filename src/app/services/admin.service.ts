@@ -23,6 +23,8 @@ export interface AdminUser {
   is_active?: boolean;
   role_id?: number | null;
   role?: { id?: number; name?: string } | null;
+  packaging_area_id?: number | null;
+  packaging_area?: { id?: number; name?: string; alias?: string } | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -99,6 +101,7 @@ export class AdminService {
     role_id: number;
     is_active?: boolean;
     full_name?: string | null;
+    packaging_area_id: number;
   }): Observable<AdminUser> {
     return this.http.post<AdminUser>(`${this.base}/users`, body);
   }
@@ -111,6 +114,7 @@ export class AdminService {
       role_id?: number;
       is_active?: boolean;
       full_name?: string | null;
+      packaging_area_id?: number;
     }
   ): Observable<AdminUser> {
     return this.http.put<AdminUser>(`${this.base}/users/${id}`, body);

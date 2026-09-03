@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AdminService, type AdminRole, type AdminUser } from '../services/admin.service';
+import { CatalogService } from '../services/catalog.service';
+import type { PackagingArea } from '../models/catalog.model';
 import { httpErrorMessage } from '../core/http-error.util';
 
 @Component({
@@ -13,9 +15,11 @@ import { httpErrorMessage } from '../core/http-error.util';
 })
 export class ConfigUsuariosComponent implements OnInit {
   private readonly admin = inject(AdminService);
+  private readonly catalog = inject(CatalogService);
   private readonly fb = inject(FormBuilder);
 
   readonly roles = signal<AdminRole[]>([]);
+  readonly packagingAreas = signal<PackagingArea[]>([]);
   readonly users = signal<AdminUser[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -30,6 +34,7 @@ export class ConfigUsuariosComponent implements OnInit {
     username: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     role_id: [null as number | null, Validators.required],
+    packaging_area_id: [null as number | null, Validators.required],
     is_active: [true],
   });
 
@@ -54,6 +59,10 @@ export class ConfigUsuariosComponent implements OnInit {
       next: (u) => this.users.set([...u].sort((a, b) => a.id - b.id)),
       error: () => this.users.set([]),
     });
+    this.catalog.getPackagingAreas().subscribe({
+      next: (a) => this.packagingAreas.set([...a].sort((x, y) => x.id - y.id)),
+      error: () => this.packagingAreas.set([]),
+    });
   }
 
   private setPasswordValidatorsForCreate(): void {
@@ -72,7 +81,14 @@ export class ConfigUsuariosComponent implements OnInit {
     this.editingId.set(null);
     this.viewingItem.set(null);
     this.showForm.set(true);
-    this.userForm.reset({ full_name: '', username: '', password: '', role_id: null, is_active: true });
+    this.userForm.reset({
+      full_name: '',
+      username: '',
+      password: '',
+      role_id: null,
+      packaging_area_id: null,
+      is_active: true,
+    });
     this.setPasswordValidatorsForCreate();
   }
 
@@ -85,6 +101,7 @@ export class ConfigUsuariosComponent implements OnInit {
       username: u.username,
       password: '',
       role_id: u.role_id ?? u.role?.id ?? null,
+      packaging_area_id: u.packaging_area_id ?? u.packaging_area?.id ?? null,
       is_active: u.is_active ?? true,
     });
     this.setPasswordValidatorsForEdit();
@@ -114,7 +131,7 @@ export class ConfigUsuariosComponent implements OnInit {
       return;
     }
     const raw = this.userForm.getRawValue();
-    if (raw.role_id == null) {
+    if (raw.role_id == null || raw.packaging_area_id == null) {
       return;
     }
     this.saving.set(true);
@@ -128,6 +145,7 @@ export class ConfigUsuariosComponent implements OnInit {
           full_name: raw.full_name.trim(),
           password: raw.password,
           role_id: raw.role_id,
+          packaging_area_id: raw.packaging_area_id,
           is_active: raw.is_active,
         })
         .subscribe({
@@ -139,12 +157,14 @@ export class ConfigUsuariosComponent implements OnInit {
         username: string;
         full_name: string;
         role_id: number;
+        packaging_area_id: number;
         is_active: boolean;
         password?: string;
       } = {
         username: raw.username.trim(),
         full_name: raw.full_name.trim(),
         role_id: raw.role_id,
+        packaging_area_id: raw.packaging_area_id,
         is_active: raw.is_active,
       };
       if (raw.password.trim()) {

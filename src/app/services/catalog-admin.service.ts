@@ -2,7 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import type { CatalogEntity, Grammage } from '../models/catalog.model';
+import type {
+  CatalogEntity,
+  Grammage,
+  LotSize,
+  PackagingArea,
+  UnitsPackedHour,
+} from '../models/catalog.model';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogAdminService {
@@ -72,5 +78,50 @@ export class CatalogAdminService {
 
   deleteGrammage(id: number): Observable<{ detail: string }> {
     return this.http.delete<{ detail: string }>(`${environment.apiUrl}/v1/grammage/${id}`);
+  }
+
+  // Áreas de empaque
+  listPackagingAreas(): Observable<PackagingArea[]> {
+    return this.http.get<PackagingArea[]>(`${environment.apiUrl}/v1/packaging_areas/manage`);
+  }
+
+  getPackagingArea(id: number): Observable<PackagingArea> {
+    return this.http.get<PackagingArea>(`${environment.apiUrl}/v1/packaging_areas/${id}`);
+  }
+
+  createPackagingArea(body: { name: string; alias: string }): Observable<PackagingArea> {
+    return this.http.post<PackagingArea>(`${environment.apiUrl}/v1/packaging_areas/create`, body);
+  }
+
+  updatePackagingArea(
+    id: number,
+    body: { name?: string; alias?: string }
+  ): Observable<PackagingArea> {
+    return this.http.put<PackagingArea>(`${environment.apiUrl}/v1/packaging_areas/${id}`, body);
+  }
+
+  deletePackagingArea(id: number): Observable<{ detail: string }> {
+    return this.http.delete<{ detail: string }>(`${environment.apiUrl}/v1/packaging_areas/${id}`);
+  }
+
+  // Unidades empaquetadas por hora (solo alta; el API no expone editar/eliminar)
+  createUnitsPackedHour(body: {
+    packaging_machine_id: number;
+    grammage_id: number;
+    value: string;
+  }): Observable<UnitsPackedHour> {
+    return this.http.post<UnitsPackedHour>(
+      `${environment.apiUrl}/v1/units_packed_hour/create`,
+      body
+    );
+  }
+
+  // Tamaños de lote (solo alta; el API no expone editar/eliminar)
+  createLotSize(body: {
+    name: string;
+    sample_size: string;
+    allowed_with_error: string;
+  }): Observable<LotSize> {
+    return this.http.post<LotSize>(`${environment.apiUrl}/v1/lot_sizes/create`, body);
   }
 }

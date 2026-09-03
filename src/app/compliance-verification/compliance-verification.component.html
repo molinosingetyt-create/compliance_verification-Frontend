@@ -21,16 +21,27 @@
             <h2 class="title-page">Verificaciones de cumplimiento</h2>
             <p class="title-page__hint">Histórico de muestreos y métricas de contenido neto</p>
           </div>
-          @if (auth.canCreateSampling()) {
-            <button type="button" class="btn btn-success sampling-btn" (click)="startSampling()">
-              <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
-              Realizar muestreo
+          <div class="header-responsive__actions">
+            <button type="button" class="btn btn-outline-secondary position-relative" (click)="openFiltersModal()">
+              <i class="bi bi-funnel me-2" aria-hidden="true"></i>
+              Filtros
+              @if (activeFilterCount() > 0) {
+                <span class="badge rounded-pill text-bg-primary compliance-filters__count-badge">
+                  {{ activeFilterCount() }}
+                </span>
+              }
             </button>
-          }
+            @if (auth.canCreateSampling()) {
+              <button type="button" class="btn btn-success sampling-btn" (click)="startSampling()">
+                <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
+                Realizar muestreo
+              </button>
+            }
+          </div>
         </div>
 
         <div class="verification-cards-wrap">
-          @for (v of verifications(); track trackByVerificationId($index, v)) {
+          @for (v of filteredVerifications(); track trackByVerificationId($index, v)) {
             <article class="verification-card">
               <header class="verification-card__header">
                 <div class="verification-card__identity">
@@ -56,6 +67,12 @@
                     <span class="verification-card__meta-k">Muestreador</span>
                     <span class="verification-card__meta-v">{{ v.sampled }}</span>
                   </div>
+                  @if (v.lot_expires) {
+                    <div class="verification-card__meta-row">
+                      <span class="verification-card__meta-k">Lote</span>
+                      <span class="verification-card__meta-v">{{ v.lot_expires }}</span>
+                    </div>
+                  }
                 </div>
                 <div class="verification-card__status" aria-label="Estado y detalle">
                   <span class="badge-status"
@@ -71,6 +88,12 @@
                     [attr.aria-label]="'Ver pesos de empaque de verificación ' + v.id">
                     <i class="bi bi-box-seam" aria-hidden="true"></i>
                   </button>
+                  @if (auth.canDeleteSampling()) {
+                    <button type="button" class="btn btn-action-view btn-action-view--compact btn-action-view--danger" (click)="deleteVerification(v)"
+                      [attr.aria-label]="'Eliminar verificación ' + v.id">
+                      <i class="bi bi-trash" aria-hidden="true"></i>
+                    </button>
+                  }
                 </div>
               </header>
               <div class="verification-card__panels">
@@ -322,6 +345,105 @@
   </div>
 </div>
 
+<div class="modal fade" id="filtersModal" tabindex="-1" aria-hidden="true" aria-labelledby="filtersModalTitle">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content modal-content--compact">
+      <div class="modal-header modal-header--compact py-2 px-3 border-bottom">
+        <h2 id="filtersModalTitle" class="modal-title h6 mb-0 flex-grow-1 pe-2">
+          <i class="bi bi-funnel me-2" aria-hidden="true"></i>Filtros
+        </h2>
+        <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body modal-body--compact p-3">
+        <form [formGroup]="listFilterForm">
+          <div class="compliance-filters__group">
+            <span class="compliance-filters__group-label">Rango de fechas</span>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label small" for="listDateFrom">Fecha inicio</label>
+                <input id="listDateFrom" type="date" class="form-control form-control-sm" formControlName="dateFrom" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label small" for="listDateTo">Fecha fin</label>
+                <input id="listDateTo" type="date" class="form-control form-control-sm" formControlName="dateTo" />
+              </div>
+            </div>
+          </div>
+
+          <hr class="compliance-filters__divider" />
+
+          <div class="compliance-filters__group">
+            <span class="compliance-filters__group-label">Catálogo y estado</span>
+            <div class="row g-3">
+              <div class="col-lg-3 col-md-6 col-6">
+                <label class="form-label small" for="listProduct">Producto</label>
+                <select id="listProduct" class="form-select form-select-sm" formControlName="productId">
+                  <option [ngValue]="null">Todos</option>
+                  @for (p of products(); track p.id) {
+                    <option [ngValue]="p.id">{{ p.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-lg-3 col-md-6 col-6">
+                <label class="form-label small" for="listBrand">Marca</label>
+                <select id="listBrand" class="form-select form-select-sm" formControlName="brandId">
+                  <option [ngValue]="null">Todas</option>
+                  @for (b of brands(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-lg-3 col-md-6 col-6">
+                <label class="form-label small" for="listGrammage">Gramaje</label>
+                <select id="listGrammage" class="form-select form-select-sm" formControlName="grammageId">
+                  <option [ngValue]="null">Todos</option>
+                  @for (g of grammages(); track g.id) {
+                    <option [ngValue]="g.id">{{ g.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-lg-3 col-md-6 col-6">
+                <label class="form-label small" for="listStatus">Estado</label>
+                <select id="listStatus" class="form-select form-select-sm" formControlName="status">
+                  <option [ngValue]="null">Todos</option>
+                  <option [ngValue]="1">CUMPLE</option>
+                  <option [ngValue]="2">NO CUMPLE</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <hr class="compliance-filters__divider" />
+
+          <div class="compliance-filters__group">
+            <span class="compliance-filters__group-label">Búsqueda libre</span>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small" for="listLot">Lote</label>
+                <input id="listLot" class="form-control form-control-sm" formControlName="lot" placeholder="Buscar lote…" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small" for="listSampled">Muestreador</label>
+                <input id="listSampled" class="form-control form-control-sm" formControlName="sampled" placeholder="Buscar por nombre…" />
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer modal-footer--compact py-2 px-3 border-top">
+        <button type="button" class="btn btn-sm btn-outline-danger me-auto" (click)="clearListFilters()">
+          Limpiar
+        </button>
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal" (click)="applyListFilters()">
+          <i class="bi bi-check-lg me-1" aria-hidden="true"></i>
+          Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true" aria-labelledby="detailModalTitle">
   <div class="modal-dialog modal-dialog-scrollable modal-detail">
     @if (selectedDetail(); as detail) {
@@ -476,22 +598,54 @@
                 </tr>
               </thead>
               <tbody>
-                @for (w of pw.package_weights; track $index) {
-                  <tr>
-                    <td class="fw-semibold text-secondary">{{ $index + 1 }}</td>
-                    <td>{{ w | decimalMax }}</td>
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td colspan="2" class="text-muted small py-3">No hay pesos de empaque guardados.</td>
-                  </tr>
+                @if (editingPackageWeights()) {
+                  @for (w of packageWeightsDraft(); track $index) {
+                    <tr>
+                      <td class="fw-semibold text-secondary">{{ $index + 1 }}</td>
+                      <td>
+                        <input
+                          type="number"
+                          step="0.01"
+                          class="form-control form-control-sm text-center"
+                          [value]="w"
+                          (input)="updatePackageWeightDraft($index, $any($event.target).value)" />
+                      </td>
+                    </tr>
+                  }
+                } @else {
+                  @for (w of pw.package_weights; track $index) {
+                    <tr>
+                      <td class="fw-semibold text-secondary">{{ $index + 1 }}</td>
+                      <td>{{ w | decimalMax }}</td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="2" class="text-muted small py-3">No hay pesos de empaque guardados.</td>
+                    </tr>
+                  }
                 }
               </tbody>
             </table>
           </div>
         </div>
         <div class="modal-footer modal-footer--compact py-2 px-3 border-top">
-          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          @if (editingPackageWeights()) {
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelEditPackageWeights()">
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-sm btn-primary" [disabled]="savingPackageWeights()" (click)="savePackageWeights()">
+              <i class="bi bi-check-lg me-1" aria-hidden="true"></i>
+              Guardar
+            </button>
+          } @else {
+            @if (auth.canEditPackageWeights()) {
+              <button type="button" class="btn btn-sm btn-outline-primary me-auto" (click)="startEditPackageWeights()">
+                <i class="bi bi-pencil me-1" aria-hidden="true"></i>
+                Modificar pesos
+              </button>
+            }
+            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          }
         </div>
       </div>
     }

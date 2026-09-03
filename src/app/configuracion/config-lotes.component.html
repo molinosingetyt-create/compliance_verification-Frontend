@@ -1,0 +1,89 @@
+<div class="config-page py-4">
+  <div class="container">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Tamaños de lote</h1>
+        <p class="text-muted small mb-0">Tamaño de muestra y unidades con error permitidas por lote</p>
+      </div>
+      <button type="button" class="btn btn-success btn-sm" (click)="startCreate()">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
+        Nuevo tamaño de lote
+      </button>
+    </div>
+
+    @if (message(); as m) {
+      <div class="alert alert-success py-2">{{ m }}</div>
+    }
+    @if (error(); as e) {
+      <div class="alert alert-danger py-2">{{ e }}</div>
+    }
+
+    @if (showForm()) {
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white fw-semibold">Nuevo tamaño de lote</div>
+        <div class="card-body">
+          <form [formGroup]="form" (ngSubmit)="submit()" class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small">Nombre</label>
+              <input class="form-control form-control-sm" formControlName="name" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">Tamaño de muestra</label>
+              <input
+                class="form-control form-control-sm"
+                formControlName="sample_size"
+                placeholder="Ej. 50 unidades" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">Permitido con error</label>
+              <input
+                class="form-control form-control-sm"
+                formControlName="allowed_with_error"
+                placeholder="Ej. ±5 unidades" />
+            </div>
+            <div class="col-12 d-flex gap-2">
+              <button type="submit" class="btn btn-primary btn-sm" [disabled]="saving()">Guardar</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelForm()">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+    @if (loading()) {
+      <p class="text-muted">Cargando…</p>
+    } @else {
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white fw-semibold">Listado</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" style="width: 3rem">#</th>
+                  <th scope="col">Nombre</th>
+                  <th scope="col">Tamaño de muestra</th>
+                  <th scope="col">Permitido con error</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (l of items(); track l.id) {
+                  <tr>
+                    <td class="text-secondary small">{{ l.id }}</td>
+                    <td class="fw-semibold">{{ l.name }}</td>
+                    <td class="small">{{ l.sample_size }}</td>
+                    <td class="small">{{ l.allowed_with_error }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="text-muted small p-3">Sin tamaños de lote registrados</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

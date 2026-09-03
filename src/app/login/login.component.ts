@@ -24,10 +24,10 @@ import { AuthService } from '../core/auth.service';
           <div class="brand-logo-frame">
             <img
               class="brand-logo"
-              src="assets/logo-la-nieve.svg"
-              width="180"
-              height="220"
-              alt="Molinos del Atlántico · La Nieve"
+              src="assets/logo-molinos.jpg"
+              width="280"
+              height="280"
+              alt="Molinos del Atlántico"
               decoding="async" />
           </div>
           <p class="brand-title">Verificación de contenido neto</p>
@@ -146,14 +146,15 @@ import { AuthService } from '../core/auth.service';
         padding: 0.5rem 1rem;
       }
       .brand-logo-frame {
-        width: min(70vw, 240px);
+        width: min(80vw, 320px);
         aspect-ratio: 4 / 5;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 1.4rem;
+        padding: 0.85rem;
         background: #ffffff;
         border-radius: 50% / 42%;
+        overflow: hidden;
         box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
         border: 1px solid rgba(252, 237, 217, 0.35);
       }
@@ -362,8 +363,8 @@ import { AuthService } from '../core/auth.service';
           padding-top: 0.25rem;
         }
         .brand-logo-frame {
-          width: 165px;
-          padding: 0.9rem;
+          width: 210px;
+          padding: 0.6rem;
         }
         .footer-note {
           text-align: center;

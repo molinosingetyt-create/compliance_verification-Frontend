@@ -43,8 +43,29 @@
 
 .main-layout__sidebar-brand {
   flex-shrink: 0;
-  padding: 1.25rem 1rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1.1rem 1rem;
   border-bottom: 1px solid rgba(252, 237, 217, 0.15);
+}
+
+.main-layout__sidebar-logo {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  object-fit: cover;
+  /* Recorta el emblema (trigo + cinta) y descarta el texto inferior del logo. */
+  object-position: 50% 12%;
+  padding: 2px;
+}
+
+.main-layout__sidebar-brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .main-layout__sidebar-title {
@@ -162,10 +183,29 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.65rem 1rem;
-  border-bottom: 1px solid rgba(16, 56, 71, 0.08);
-  background: #fff;
+  padding: 0.85rem 1.25rem;
+  background: #0066cc;
+  color: #fff;
   z-index: 10;
+}
+
+.main-layout__toolbar-titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.main-layout__toolbar-title {
+  font-family: var(--app-font-primary, Georgia, serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+}
+
+.main-layout__toolbar-subtitle {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .main-layout__menu-btn {
@@ -205,11 +245,61 @@
 .main-layout__toolbar-user {
   display: flex;
   align-items: center;
+  gap: 0.6rem;
   max-width: min(52vw, 360px);
   min-width: 0;
   overflow: hidden;
+}
+
+.main-layout__avatar {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.main-layout__toolbar-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.main-layout__toolbar-user-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.main-layout__toolbar-user-role {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.main-layout__logout-btn {
+  flex: none;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.main-layout__logout-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-color: #fff;
 }
 
 .main-layout__outlet {

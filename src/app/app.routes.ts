@@ -10,6 +10,9 @@ import { ConfigPermisosComponent } from './configuracion/config-permisos.compone
 import { ConfigProductosComponent } from './configuracion/config-productos.component';
 import { ConfigMarcasComponent } from './configuracion/config-marcas.component';
 import { ConfigGramajesComponent } from './configuracion/config-gramajes.component';
+import { ConfigAreasComponent } from './configuracion/config-areas.component';
+import { ConfigUnidadesHoraComponent } from './configuracion/config-unidades-hora.component';
+import { ConfigLotesComponent } from './configuracion/config-lotes.component';
 import { authGuard } from './core/auth.guard';
 import { anyPermissionGuard, permissionGuard } from './core/permission.guard';
 
@@ -73,6 +76,24 @@ export const routes: Routes = [
             path: 'gramajes',
             component: ConfigGramajesComponent,
             title: 'Gramajes · Configuración',
+            canActivate: [permissionGuard('catalog:manage', '/compliance')],
+          },
+          {
+            path: 'areas',
+            component: ConfigAreasComponent,
+            title: 'Áreas · Configuración',
+            canActivate: [permissionGuard('catalog:manage', '/compliance')],
+          },
+          {
+            path: 'unidades-hora',
+            component: ConfigUnidadesHoraComponent,
+            title: 'Unidades/hora · Configuración',
+            canActivate: [permissionGuard('catalog:manage', '/compliance')],
+          },
+          {
+            path: 'tamanos-lote',
+            component: ConfigLotesComponent,
+            title: 'Tamaños de lote · Configuración',
             canActivate: [permissionGuard('catalog:manage', '/compliance')],
           },
         ],

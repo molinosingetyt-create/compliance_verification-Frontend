@@ -30,6 +30,8 @@ export interface ComplianceVerificationRow {
   machine_id?: number | null;
   brand_id?: number | null;
   grammage_id?: number | null;
+  packaging_area_id?: number | null;
+  packaging_area_name?: string | null;
   product_name: string | null;
   machine_name: string | null;
   grammage_name: string | null;
@@ -42,6 +44,7 @@ export interface ComplianceVerificationRow {
   standard_deviation: number;
   under_nominal_count: number;
   percentage_under_nominal: number;
+  lot_expires?: string | null;
   status: number;
 }
 
@@ -92,6 +95,13 @@ export interface UpdateItemResponse {
   detail: string;
   metrics: UpdateItemMetrics;
   item?: ItemComplianceVerificationRow;
+}
+
+export interface UpdatePackageWeightsResponse {
+  detail: string;
+  package_weights: number[];
+  average_weight: number;
+  metrics: UpdateItemMetrics;
 }
 
 export interface ComplianceVerificationPackageWeights {

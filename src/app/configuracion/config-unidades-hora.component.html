@@ -1,0 +1,98 @@
+<div class="config-page py-4">
+  <div class="container">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Unidades/hora</h1>
+        <p class="text-muted small mb-0">
+          Unidades empaquetadas por hora, según máquina y gramaje
+        </p>
+      </div>
+      <button type="button" class="btn btn-success btn-sm" (click)="startCreate()">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
+        Nueva unidad/hora
+      </button>
+    </div>
+
+    @if (message(); as m) {
+      <div class="alert alert-success py-2">{{ m }}</div>
+    }
+    @if (error(); as e) {
+      <div class="alert alert-danger py-2">{{ e }}</div>
+    }
+
+    @if (showForm()) {
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white fw-semibold">Nueva unidad/hora</div>
+        <div class="card-body">
+          <form [formGroup]="form" (ngSubmit)="submit()" class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small">Máquina</label>
+              <select class="form-select form-select-sm" formControlName="packaging_machine_id">
+                <option [ngValue]="null">Seleccione…</option>
+                @for (m of machines(); track m.id) {
+                  <option [ngValue]="m.id">{{ m.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">Gramaje</label>
+              <select class="form-select form-select-sm" formControlName="grammage_id">
+                <option [ngValue]="null">Seleccione…</option>
+                @for (g of grammages(); track g.id) {
+                  <option [ngValue]="g.id">{{ g.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">Valor</label>
+              <input
+                class="form-control form-control-sm"
+                formControlName="value"
+                placeholder="Ej. 100 unidades/hora" />
+            </div>
+            <div class="col-12 d-flex gap-2">
+              <button type="submit" class="btn btn-primary btn-sm" [disabled]="saving()">Guardar</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelForm()">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+    @if (loading()) {
+      <p class="text-muted">Cargando…</p>
+    } @else {
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white fw-semibold">Listado</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" style="width: 3rem">#</th>
+                  <th scope="col">Máquina</th>
+                  <th scope="col">Gramaje</th>
+                  <th scope="col">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (u of items(); track u.id) {
+                  <tr>
+                    <td class="text-secondary small">{{ u.id }}</td>
+                    <td class="fw-semibold">{{ machineName(u.packaging_machine_id) }}</td>
+                    <td>{{ grammageName(u.grammage_id) }}</td>
+                    <td class="small">{{ u.value }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="text-muted small p-3">Sin unidades por hora registradas</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
